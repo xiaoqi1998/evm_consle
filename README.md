@@ -1,200 +1,705 @@
 # EVM API Flask
 
-## 项目简介
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Flask](https://img.shields.io/badge/Flask-2.3.3-blue)](https://palletsprojects.com/p/flask/)
+[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
 
-EVM API Flask 是一个基于 Flask 框架构建的 API 服务，旨在提供与 EVM (Ethereum Virtual Machine) 兼容区块链进行交互的接口。它封装了 Web3.py 库的功能，允许用户通过简单的 HTTP 请求来读取智能合约数据、调用智能合约方法以及发送交易。
+**EVM API Flask** 是一个开源的 Flask 框架 API 服务，提供与 EVM (Ethereum Virtual Machine) 兼容区块链进行交互的完整解决方案。项目采用 MIT 许可证开源，允许个人和企业免费使用、修改和分发。
 
-**主要功能:**
-*   **读取合约数据**: 通过合约地址、ABI 和方法名读取链上数据。
-*   **调用合约方法**: 执行智能合约的写操作，发送交易到区块链。
-*   **灵活配置**: 支持通过 `config.py` 配置 Web3 提供者 URL、私钥和发送者地址。
+## 🌟 项目简介
 
-## 如何使用
+EVM API Flask 封装了 Web3.py 库的核心功能，通过 RESTful API 接口，允许开发者和用户通过简单的 HTTP 请求来：
 
-本项目提供了一系列 RESTful API 接口，允许您通过 HTTP 请求与 EVM 兼容的区块链进行交互。
+- **读取链上数据**：查询智能合约的状态和变量
+- **调用合约方法**：执行智能合约的 view/pure 函数
+- **发送交易**：调用需要签名的写操作
+- **管理账户**：支持多账户管理和私钥分片加密存储
+- **配置多链**：支持自定义 RPC 和链配置
+- **历史记录**：完整的调用历史追踪
 
-### 运行项目
+**开源特性：**
+- ✅ 完全开源，MIT 许可证
+- ✅ 前后端分离架构
+- ✅ 支持 API Token 认证
+- ✅ 私钥分片加密存储（Shamir Secret Sharing）
+- ✅ SSRF 防护机制
+- ✅ 多语言支持（i18n）
 
-1.  **安装依赖**: 确保您已安装所有必要的 Python 依赖。
-2.  **配置**: 根据您的区块链网络和需求配置 `config.py` 文件。
-3.  **启动服务**:
-    ```bash
-    python app.py
-    ```
-    服务将在 `http://127.0.0.1:5002/` 上运行（如果 `app.py` 中配置的端口是 5002）。应用。
+## 📋 目录
 
-## 安装
+- [项目简介](#-项目简介)
+- [开源信息](#-开源信息)
+- [主要功能](#-主要功能)
+- [技术栈](#-技术栈)
+- [快速开始](#-快速开始)
+- [配置说明](#-配置说明)
+- [API 文档](#-api-文档)
+- [数据库模型](#-数据库模型)
+- [项目结构](#-项目结构)
+- [安全考虑](#-安全考虑)
+- [贡献指南](#-贡献指南)
+- [许可证](#-许可证)
 
-1.  **克隆仓库**:
-    ```bash
-    git clone <仓库地址>
-    cd evm_api_flask
-    ```
-2.  **创建并激活虚拟环境** (推荐):
-    ```bash
-    python -m venv venv
-    # Windows
-    .\venv\Scripts\activate
-    # macOS/Linux
-    source venv/bin/activate
-    ```
-3.  **安装依赖**:
-    由于 `requirements.txt` 文件不存在，请手动安装 `Flask` 和 `web3` 库：
-    ```bash
-    pip install Flask web3
-    ```
-    如果项目有其他依赖，请根据实际情况安装。
+## 🎯 主要功能
 
-## 配置
+### 合约交互
+- ✅ 读取合约数据 (`/read_contract`)
+- ✅ 写入合约数据 (`/write_contract`)
+- ✅ 获取合约事件 (`/get_events`)
+- ✅ 解码交易数据 (`/decode_transaction`)
+- ✅ 获取交易回执 (`/get_transaction_receipt`)
 
-项目配置通过 `config.py` 文件管理。您需要根据您的区块链网络和需求修改以下变量：
+### 账户管理
+- ✅ 多账户支持
+- ✅ 账户别名管理
+- ✅ 私钥分片加密存储（服务器端）
+- ✅ 前端私钥分片（Shamir Secret Sharing）
 
-*   `WEB3_PROVIDER_URL`: 您的 EVM 兼容区块链的 RPC URL。例如：`"https://api.zan.top/node/v1/base/sepolia/6ef49f71388347d89857452779586df9"`。
-*   `PRIVATE_KEY`: 用于发送交易的账户私钥。**在生产环境中，请务必安全管理您的私钥，例如使用环境变量或密钥管理服务。**
-*   `SENDER_ADDRESS`: 发送交易的账户地址。
+### RPC 配置
+- ✅ 多链支持
+- ✅ 自定义 RPC URL
+- ✅ 链 ID 和别名配置
+- ✅ SSRF 防护（禁止内网/本地 RPC）
 
-**示例 `config.py`:**
-```python
-# Configuration for EVM API
+### 安全特性
+- ✅ 用户认证（注册/登录）
+- ✅ API Token 认证
+- ✅ 密码哈希存储
+- ✅ 私钥分片加密
+- ✅ SSRF 防护
+- ✅ 输入验证
+- ✅ XSS 防护（DOMPurify）
 
-WEB3_PROVIDER_URL="https://api.zan.top/node/v1/base/sepolia/6ef49f71388347d89857452779586df9"
-PRIVATE_KEY = "0x1ade2042682c111a5afd62f7419850eb9f1e8f81"
-SENDER_ADDRESS = "5cc1188126ea098eb07b0e6881411b7c9f40cf2451af7074a6fa93abcf5de143"
+### 其他功能
+- ✅ 调用历史记录
+- ✅ ABI 管理（上传/删除/查询）
+- ✅ 风险协议确认
+- ✅ 多语言界面
+- ✅ RSA 公钥加密传输
+
+## 🛠 技术栈
+
+### 后端
+- **Flask 2.3.3** - Web 框架
+- **Flask-SQLAlchemy 3.0.5** - ORM
+- **Flask-Login 0.6.3** - 用户认证
+- **Flask-WTF 1.1.1** - 表单处理
+- **web3.py 6.11.0** - EVM 交互
+- **PyMySQL 1.1.0** - MySQL 连接
+- **python-dotenv 1.0.0** - 环境变量
+- **cryptography 41.0.7** - 加密库
+- **flasgger 0.9.5** - API 文档
+
+### 前端
+- **ethers.js 6.9.0** - Ethereum 库
+- **Bootstrap 5** - UI 框架
+- **DOMPurify 3.0.6** - XSS 防护
+- **jsencrypt 3.3.2** - RSA 加密
+- **i18next** - 国际化
+
+### 数据库
+- **MySQL** - 关系型数据库
+
+## 🚀 快速开始
+
+### 环境要求
+
+- Python 3.8+
+- MySQL 5.7+
+- pip 包管理器
+
+### 安装步骤
+
+1. **克隆仓库**
+
+```bash
+git clone https://github.com/xiaoqi1998/evm_api_flask.git
+cd evm_api_flask
 ```
 
-## API 文档
+2. **创建虚拟环境**（推荐）
 
-### `/` (GET)
-*   **描述**: 返回一个简单的 "Hello, World!" 消息，用于测试服务是否正常运行。
-*   **响应**:
-    ```
-    "Hello, World!"
-    ```
+```bash
+python -m venv venv
+# Windows
+.\venv\Scripts\activate
+# macOS/Linux
+source venv/bin/activate
+```
 
-### `/read_contract` (POST)
-*   **描述**: 从 EVM 链上的智能合约读取数据。
-*   **参数**:
-    *   `contract_address` (string, 必填): 智能合约的地址。
-    *   `abi_name` (string, 必填): 位于 `abi` 目录下的 ABI 文件名（不带 `.json` 扩展名）。
-    *   `method_name` (string, 必填): 要调用的合约方法名。
-    *   `args` (list, 可选): 传递给合约方法的参数列表。
-*   **示例请求体**:
-    ```json
-    {
-        "contract_address": "0x...",
-        "abi_name": "MyContract",
-        "method_name": "getData",
-        "args": ["param1", 123]
-    }
-    ```
-*   **示例成功响应**:
-    ```json
-    {
-        "status": "success",
-        "message": "Success",
-        "data": {
-            "result": "..."
-        }
-    }
-    ```
-*   **示例错误响应**:
-    ```json
-    {
-        "status": "error",
-        "message": "ABI file not found",
-        "error": "ABI file not found",
-        "details": "ABI file not found: /path/to/abi/MyContract.json"
-    }
-    ```
+3. **安装依赖**
 
-### `/time_contract` (POST)
-*   **描述**: 调用智能合约方法，通常涉及读取操作，类似于 `read_contract`。此命名可能暗示用于时间敏感的合约交互或查询。
-*   **参数**:
-    *   `contract_address` (string, 必填): 智能合约的地址。
-    *   `abi_name` (string, 必填): 位于 `abi` 目录下的 ABI 文件名（不带 `.json` 扩展名）。
-    *   `method_name` (string, 必填): 要调用的合约方法名。
-    *   `args` (list, 可选): 传递给合约方法的参数列表。
-*   **示例请求体**:
-    ```json
-    {
-        "contract_address": "0x...",
-        "abi_name": "MyContract",
-        "method_name": "getTime",
-        "args": []
-    }
-    ```
-*   **示例成功响应**:
-    ```json
-    {
-        "status": "success",
-        "message": "Success",
-        "data": {
-            "result": "..."
-        }
-    }
-    ```
-*   **示例错误响应**:
-    ```json
-    {
-        "status": "error",
-        "message": "Invalid contract address or method",
-        "error": "Invalid contract address or method",
-        "details": "..."
-    }
-    ```
+```bash
+pip install -r requirements.txt
+```
 
-### `/write_contract` (POST)
-*   **描述**: 向 EVM 链上的智能合约写入数据，这涉及发送交易。需要配置 `PRIVATE_KEY` 和 `SENDER_ADDRESS`。
-*   **参数**:
-    *   `contract_address` (string, 必填): 智能合约的地址。
-    *   `abi_name` (string, 必填): 位于 `abi` 目录下的 ABI 文件名（不带 `.json` 扩展名）。
-    *   `method_name` (string, 必填): 要调用的合约方法名。
-    *   `args` (list, 可选): 传递给合约方法的参数列表。
-*   **示例请求体**:
-    ```json
-    {
-        "contract_address": "0x...",
-        "abi_name": "MyContract",
-        "method_name": "setData",
-        "args": ["newValue"]
-    }
-    ```
-*   **示例成功响应**:
-    ```json
-    {
-        "status": "success",
-        "message": "Success",
-        "data": {
-            "tx_hash": "0x..."
-        }
-    }
-    ```
-*   **示例错误响应**:
-    ```json
-    {
-        "status": "error",
-        "message": "Server-side configuration error",
-        "error": "Server-side configuration error",
-        "details": "PRIVATE_KEY or SENDER_ADDRESS not set."
-    }
-    ```
+4. **配置数据库**
 
-### `/test` (GET)
-*   **描述**: 一个测试接口，返回预定义的 JSON 对象。
-*   **响应**:
-    ```json
-    {
-        "code": 0,
-        "data": {
-            "list": [
-                {
-                    "id": "3250492430007",
-                    "timestamp": 1764567540862,
-                    "points": 100,
-                    "descr": "Bought EDS worth 33 USDT"
-                }
-            ]
-        },
-        "msg": "success"
-    }
-    ```
+创建 MySQL 数据库并配置环境变量：
+
+```bash
+export DATABASE_URL="mysql+pymysql://用户名:密码@主机:端口/数据库?charset=utf8mb4"
+# Windows (PowerShell)
+$env:DATABASE_URL="mysql+pymysql://用户名:密码@主机:端口/数据库?charset=utf8mb4"
+```
+
+5. **初始化数据库**
+
+```bash
+python migrate.py
+```
+
+或使用 Flask-Migrate：
+
+```bash
+flask db init
+flask db migrate
+flask db upgrade
+```
+
+6. **启动服务**
+
+```bash
+python app.py
+```
+
+服务将在 `http://0.0.0.0:5002/` 上运行。
+
+## ⚙️ 配置说明
+
+### 环境变量
+
+项目使用环境变量进行配置，推荐使用 `.env` 文件：
+
+```env
+DATABASE_URL="mysql+pymysql://用户名:密码@主机:端口/数据库?charset=utf8mb4"
+SECRET_KEY="your-secret-key-here"
+```
+
+### 数据库配置
+
+项目使用 SQLAlchemy 连接 MySQL 数据库。确保数据库已创建并配置正确的字符集（utf8mb4）。
+
+### 安全配置
+
+- **SECRET_KEY**: 用于会话加密，生产环境必须设置强密钥
+- **DATABASE_URL**: 数据库连接字符串
+- **私钥存储**: 使用 Shamir Secret Sharing 分片存储
+
+## 📚 API 文档
+
+### 基础信息
+
+- **Base URL**: `http://localhost:5002`
+- **Content-Type**: `application/json`
+- **认证方式**: `X-API-Token` 请求头
+
+### 通用响应格式
+
+```json
+{
+  "status": "success|error",
+  "message": "描述信息",
+  "data": { ... },
+  "error": "错误类型",
+  "details": "详细错误信息"
+}
+```
+
+### 认证 API
+
+#### POST `/register` - 用户注册
+
+**请求体：**
+```json
+{
+  "username": "user123",
+  "password": "password123"
+}
+```
+
+**响应：**
+```json
+{
+  "status": "success",
+  "message": "注册成功"
+}
+```
+
+#### POST `/login` - 用户登录
+
+**请求体：**
+```json
+{
+  "username": "user123",
+  "password": "password123"
+}
+```
+
+**响应：**
+```json
+{
+  "status": "success",
+  "message": "登录成功",
+  "data": {
+    "username": "user123",
+    "token": "evm-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  }
+}
+```
+
+#### GET `/api/user_info` - 获取用户信息
+
+**请求头：**
+```
+X-API-Token: your-token-here
+```
+
+**响应：**
+```json
+{
+  "status": "success",
+  "data": {
+    "username": "user123",
+    "token": "evm-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  }
+}
+```
+
+#### POST `/api/accept_risk` - 同意风险协议
+
+**请求头：**
+```
+X-API-Token: your-token-here
+```
+
+**响应：**
+```json
+{
+  "status": "success",
+  "message": "风险协议已同意"
+}
+```
+
+### 合约交互 API
+
+#### POST `/contract/read_contract` - 读取合约数据
+
+**请求体：**
+```json
+{
+  "contract_address": "0x...",
+  "abi_name": "MyContract",
+  "method_name": "getData",
+  "args": ["param1", 123],
+  "chain_id": 84532,
+  "rpc_url": "https://rpc.example.com"
+}
+```
+
+**响应：**
+```json
+{
+  "status": "success",
+  "message": "Success",
+  "data": {
+    "result": "..."
+  }
+}
+```
+
+#### POST `/contract/write_contract` - 写入合约
+
+**请求体：**
+```json
+{
+  "raw_transaction": "0xf8...",
+  "contract_address": "0x...",
+  "abi_name": "MyContract",
+  "method_name": "setData",
+  "args": ["newValue"],
+  "chain_id": 84532
+}
+```
+
+**响应：**
+```json
+{
+  "status": "success",
+  "message": "Success",
+  "data": {
+    "transaction_hash": "0x..."
+  }
+}
+```
+
+#### POST `/contract/get_events` - 获取合约事件
+
+**请求体：**
+```json
+{
+  "contract_address": "0x...",
+  "abi_name": "MyContract",
+  "event_name": "Transfer",
+  "from_block": 0,
+  "to_block": "latest",
+  "argument_filters": {
+    "from": "0x..."
+  },
+  "chain_id": 84532
+}
+```
+
+#### POST `/contract/get_abi_details` - 获取 ABI 详情
+
+**查询参数：**
+```
+?abi_name=MyContract
+```
+
+**响应：**
+```json
+{
+  "status": "success",
+  "data": {
+    "details": {
+      "functions": [...],
+      "events": [...],
+      "errors": [...]
+    },
+    "full_abi": [...]
+  }
+}
+```
+
+### 交易 API
+
+#### POST `/transaction/write_contract` - 发送交易
+
+与 `/contract/write_contract` 功能相同。
+
+#### POST `/transaction/get_transaction_receipt` - 获取交易回执
+
+**请求体：**
+```json
+{
+  "transaction_hash": "0x...",
+  "chain_id": 84532
+}
+```
+
+#### POST `/transaction/decode_transaction` - 解码交易
+
+**请求体：**
+```json
+{
+  "transaction_hash": "0x...",
+  "abi_name": "MyContract"
+}
+```
+
+### 账户管理 API
+
+#### GET `/config/get_configs` - 获取配置
+
+**响应：**
+```json
+{
+  "status": "success",
+  "data": {
+    "accounts": ["my_acc", "my_acc2"],
+    "chains": [
+      {
+        "chain_id": "84532",
+        "alias": "base-sepolia",
+        "rpc_url": "https://..."
+      }
+    ]
+  }
+}
+```
+
+#### POST `/config/add_account` - 添加账户
+
+**请求体：**
+```json
+{
+  "alias": "my_acc",
+  "address": "0x...",
+  "pk_slice_server": "..."
+}
+```
+
+#### GET `/config/api/accounts` - 获取账户列表
+
+#### DELETE `/config/api/accounts/:alias` - 删除账户
+
+#### POST `/config/api/rpcs` - 添加 RPC
+
+**请求体：**
+```json
+{
+  "chain_id": "84532",
+  "rpc_url": "https://...",
+  "alias": "base-sepolia"
+}
+```
+
+#### DELETE `/config/api/rpcs/:chain_id` - 删除 RPC
+
+#### GET `/config/api/public_key` - 获取 RSA 公钥
+
+**响应：**
+```json
+{
+  "status": "success",
+  "data": {
+    "public_key": "-----BEGIN PUBLIC KEY-----\n..."
+  }
+}
+```
+
+### 历史记录 API
+
+#### GET `/history/api/history` - 获取调用历史
+
+**响应：**
+```json
+{
+  "status": "success",
+  "data": {
+    "history": [
+      {
+        "id": 1,
+        "call_id": "xxxx",
+        "timestamp": "2026-03-09T10:00:00",
+        "type": "read",
+        "contract": "0x...",
+        "method": "getData",
+        "args": [...],
+        "result": {...},
+        "error": null,
+        "chain_id": "84532",
+        "abi_name": "MyContract"
+      }
+    ]
+  }
+}
+```
+
+#### POST `/history/api/history/clear` - 清空历史
+
+#### POST `/contract/api/history/clear` - 清空历史（备用）
+
+## 🗄️ 数据库模型
+
+### User（用户表）
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | Integer | 主键 |
+| username | String(80) | 用户名（唯一） |
+| password_hash | String(255) | 密码哈希 |
+| token | String(120) | API Token |
+| created_at | DateTime | 创建时间 |
+| is_disabled | Boolean | 是否禁用 |
+| risk_accepted_at | DateTime | 风险协议同意时间 |
+
+### Account（账户表）
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | Integer | 主键 |
+| user_id | Integer | 用户ID（外键） |
+| alias | String(80) | 账户别名 |
+| address | String(120) | 钱包地址 |
+| pk_slice_server | Text | 服务器端私钥分片 |
+
+### RpcConfig（RPC配置表）
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | Integer | 主键 |
+| user_id | Integer | 用户ID（外键） |
+| chain_id | String(80) | 链ID |
+| rpc_url | String(200) | RPC URL |
+| alias | String(80) | 链别名 |
+
+### Abi（ABI表）
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | Integer | 主键 |
+| user_id | Integer | 用户ID（外键） |
+| name | String(80) | ABI名称 |
+| content | JSON | ABI内容 |
+
+### CallHistory（调用历史表）
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | Integer | 主键 |
+| user_id | Integer | 用户ID（外键） |
+| call_id | String(80) | 调用ID |
+| timestamp | DateTime | 时间戳 |
+| type | String(10) | 类型（read/write） |
+| contract | String(200) | 合约地址 |
+| method | String(200) | 方法名 |
+| args | JSON | 参数 |
+| result | JSON | 结果 |
+| error | Text | 错误信息 |
+| chain_id | String(80) | 链ID |
+| abi_name | String(80) | ABI名称 |
+
+## 📁 项目结构
+
+```
+evm_api_flask/
+├── app.py                      # 主应用入口
+├── config.py                   # 配置文件（可选）
+├── models.py                   # 数据库模型
+├── extensions.py               # 扩展初始化
+├── utils.py                    # 工具函数
+├── migrate.py                  # 数据库迁移脚本
+├── requirements.txt            # 依赖列表
+├── abi/                        # ABI 文件目录（可选）
+├── static/                     # 静态资源
+│   ├── index.js               # 主要前端逻辑
+│   ├── style.css              # 样式文件
+│   ├── EVM.png                # 图标
+│   └── js/                    # 前端模块
+│       ├── api.js             # API 封装
+│       ├── crypto-utils.js    # 加密工具（Shamir）
+│       ├── wallet.js          # 钱包相关
+│       ├── ui.js              # UI 交互
+│       └── i18n.js            # 国际化
+└── templates/                  # HTML 模板
+    ├── index.html             # 首页
+    ├── usage.html             # 使用说明
+    ├── security.html          # 安全与开源
+    ├── docs.html              # 文档
+    └── admin.html             # 管理页面
+```
+
+## 🔒 安全考虑
+
+### 已实现的安全措施
+
+1. **密码安全**
+   - 使用 Werkzeug 的 `generate_password_hash` 进行密码哈希
+   - 支持密码强度验证
+
+2. **私钥安全**
+   - Shamir Secret Sharing 秘密共享算法
+   - 私钥分片存储（前端 + 服务器）
+   - 单独分片无法还原完整私钥
+
+3. **网络攻击防护**
+   - SSRF 防护（禁止内网/本地 RPC URL）
+   - XSS 防护（DOMPurify）
+   - 输入验证
+
+4. **认证安全**
+   - API Token 认证
+   - 会话管理
+   - 账户禁用机制
+
+5. **数据库安全**
+   - 参数化查询防止 SQL 注入
+   - 连接池管理
+   - 超时设置
+
+### 生产环境建议
+
+1. 使用环境变量管理敏感信息
+2. 启用 HTTPS
+3. 设置强 SECRET_KEY
+4. 定期更新依赖
+5. 启用日志审计
+6. 配置防火墙规则
+7. 使用专用数据库用户
+8. 启用 CORS 限制
+
+## 🤝 贡献指南
+
+欢迎贡献！请遵循以下步骤：
+
+1. Fork 本仓库
+2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 开启 Pull Request
+
+### 开发指南
+
+1. 安装开发依赖
+2. 运行测试
+3. 确保代码符合风格规范
+4. 更新文档
+
+### 代码风格
+
+- Python: PEP 8
+- JavaScript: ESLint (推荐)
+- 使用类型提示（可选）
+
+## 📄 许可证
+
+本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
+
+```
+MIT License
+
+Copyright (c) 2026 
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+## ⚠️ 免责声明
+
+**重要提示：**
+
+1. 本软件按"原样"提供，不提供任何形式的担保
+2. 使用本软件进行区块链交互存在风险
+3. 请妥善保管您的私钥和助记词
+4. 建议在测试网先行测试
+5. 生产环境使用前请进行充分的安全审计
+
+**私钥安全警告：**
+
+- 本项目采用私钥分片存储方案
+- 单独的分片无法还原完整私钥
+- 但仍需注意：服务器端分片存储存在潜在风险
+- 生产环境建议使用更安全的密钥管理方案（HSM、KMS 等）
+
+## 📞 联系方式
+
+- GitHub Issues: [https://github.com/xiaoqi1998/evm_api_flask/issues](https://github.com/xiaoqi1998/evm_api_flask/issues)
+- Email: [你的邮箱]
+
+## 🙏 致谢
+
+- [Web3.py](https://github.com/ethereum/web3.py) - Ethereum Python API
+- [Flask](https://github.com/pallets/flask) - Python Web Framework
+- [ethers.js](https://github.com/ethers-io/ethers.js/) - Ethereum JavaScript API
+- [Bootstrap](https://github.com/twbs/bootstrap) - UI Framework
+
+---
+
+⭐ 如果这个项目对你有帮助，请给它点个 star！
