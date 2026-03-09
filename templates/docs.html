@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>开发文档 - EVM API 控制面板</title>
+    <meta name="description" content="EVM API 控制面板开发文档，详细介绍所有API接口的使用方法和参数说明。">
+    <meta name="keywords" content="EVM API, 开发文档, API接口, 智能合约, 区块链开发">
+    <link rel="icon" href="/static/EVM.png" type="image/png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-light: #f9fafb;
+            --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body { 
+            background-color: var(--bg-light); 
+            font-family: 'Inter', -apple-system, sans-serif;
+            color: #1f2937;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 0.75rem 0;
+        }
+
+        .card { 
+            border: none; 
+            border-radius: 12px; 
+            box-shadow: var(--card-shadow); 
+            transition: var(--transition);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+        }
+
+        .card-header {
+            font-weight: 600;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            padding: 1rem 1.25rem;
+        }
+
+        .btn {
+            border-radius: 8px;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            transition: var(--transition);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            border-color: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        pre {
+            background: #1e293b; 
+            color: #e2e8f0;
+            padding: 1.25rem; 
+            border-radius: 8px; 
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+
+        .api-card {
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .toc {
+            position: sticky;
+            top: 1.5rem;
+            max-height: calc(100vh - 5rem);
+            overflow-y: auto;
+        }
+
+        .toc-link {
+            color: #6b7280;
+            text-decoration: none;
+            transition: var(--transition);
+            display: block;
+            padding: 0.25rem 0;
+        }
+
+        .toc-link:hover {
+            color: var(--primary-color);
+            transform: translateX(4px);
+        }
+
+        .toc-link.active {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        /* 动画效果 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .method-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        .method-get {
+            background-color: #10b981;
+            color: white;
+        }
+
+        .method-post {
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        .method-delete {
+            background-color: #ef4444;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <img src="/static/EVM.png" width="30" height="30" class="me-2" onerror="this.style.display='none'">
+                <span data-i18n="nav_title">EVM API 控制面板</span>
+            </a>
+            <div class="d-flex align-items-center">
+                <a href="/" class="btn btn-sm btn-outline-light me-2" data-i18n="back_home">返回首页</a>
+                <a href="/usage" class="btn btn-sm btn-outline-light me-2" data-i18n="usage_guide">使用说明</a>
+                <a href="/docs" class="btn btn-sm btn-outline-light me-2" data-i18n="dev_docs">开发文档</a>
+                <button class="btn btn-sm btn-outline-light" onclick="toggleLanguage()" id="lang-btn" data-i18n="lang_btn">English</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <!-- 左侧目录 -->
+            <div class="col-lg-3">
+                <div class="card shadow-sm border-0 toc">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3" data-i18n="toc_title">目录</h5>
+                        <ul class="list-unstyled">
+                            <li><a href="#overview" class="toc-link">API 概述</a></li>
+                            <li><a href="#authentication" class="toc-link">认证方式</a></li>
+                            <li><a href="#account-api" class="toc-link">账户管理 API</a></li>
+                            <li><a href="#rpc-api" class="toc-link">RPC 管理 API</a></li>
+                            <li><a href="#abi-api" class="toc-link">ABI 管理 API</a></li>
+                            <li><a href="#contract-api" class="toc-link">合约交互 API</a></li>
+                            <li><a href="#event-api" class="toc-link">事件查询 API</a></li>
+                            <li><a href="#transaction-api" class="toc-link">交易相关 API</a></li>
+                            <li><a href="#history-api" class="toc-link">历史记录 API</a></li>
+                            <li><a href="#config-api" class="toc-link">配置管理 API</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧内容 -->
+            <div class="col-lg-9">
+                <!-- API 概述 -->
+                <div id="overview" class="card mb-4 section">
+                    <div class="card-header bg-primary text-white">
+                        <i class="bi bi-info-circle me-2"></i><span data-i18n="api_overview">API 概述</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-4" data-i18n="api_overview_desc">EVM API 控制面板提供了一系列 RESTful API，用于管理账户、RPC 节点、ABI 文件，以及与智能合约进行交互。所有 API 都需要通过 X-API-Token 进行认证。</p>
+                        
+                        <h6 class="fw-bold mb-2" data-i18n="api_features">API 特性：</h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i><span data-i18n="api_feature_1">RESTful 设计风格</span></li>
+                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i><span data-i18n="api_feature_2">统一的错误处理和响应格式</span></li>
+                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i><span data-i18n="api_feature_3">支持多链节点切换</span></li>
+                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i><span data-i18n="api_feature_4">完整的智能合约交互功能</span></li>
+                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i><span data-i18n="api_feature_5">支持 MetaMask 集成</span></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 认证方式 -->
+                <div id="authentication" class="card mb-4 section">
+                    <div class="card-header bg-secondary text-white">
+                        <i class="bi bi-shield-lock me-2"></i><span data-i18n="authentication">认证方式</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-3" data-i18n="auth_desc">所有 API 接口都需要通过 X-API-Token 进行认证。登录后，系统会返回一个 Token，您需要在每次请求时将该 Token 放在请求头中。</p>
+                        
+                        <h6 class="fw-bold mb-2" data-i18n="auth_header">认证请求头：</h6>
+                        <pre>X-API-Token: evm-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</pre>
+                        
+                        <h6 class="fw-bold mb-2" data-i18n="auth_example">使用示例：</h6>
+                        <pre>// JavaScript 示例
+fetch('/api/accounts', {
+  headers: {
+    'X-API-Token': 'evm-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+  }
+});</pre>
+                    </div>
+                </div>
+
+                <!-- 账户管理 API -->
+                <div id="account-api" class="card mb-4 section">
+                    <div class="card-header bg-info text-white">
+                        <i class="bi bi-wallet me-2"></i><span data-i18n="account_api">账户管理 API</span>
+                    </div>
+                    <div class="card-body">
+                        <!-- 获取账户列表 -->
+                        <div class="api-card bg-light p-4 mb-4 rounded">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold">GET /api/accounts</h6>
+                                <span class="method-badge method-get">GET</span>
+                            </div>
+                            <p class="mb-2" data-i18n="get_accounts_desc">获取当前用户的账户列表</p>
+                            <h6 class="fw-bold mb-1" data-i18n="response_format">响应格式：</h6>
+                            <pre>{"status": "success", "message": "Success", "data": {"account1": {"address": "0x...", "private_key": "0x..."}, ...}}</pre>
+                        </div>
+
+                        <!-- 添加账户 -->
+                        <div class="api-card bg-light p-4 mb-4 rounded">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold">POST /api/accounts</h6>
+                                <span class="method-badge method-post">POST</span>
+                            </div>
+                            <p class="mb-2" data-i18n="add_account_desc">添加新的账户</p>
+                            <h6 class="fw-bold mb-1" data-i18n="request_body">请求体：</h6>
+                            <pre>{"alias": "account1", "address": "0x...", "private_key": "0x..."}</pre>
+                            <h6 class="fw-bold mb-1 mt-2" data-i18n="response_format">响应格式：</h6>
+                            <pre>{"status": "success", "message": "账户已保存"}</pre>
+                        </div>
+
+                        <!-- 删除账户 -->
+                        <div class="api-card bg-light p-4 rounded">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold">DELETE /api/accounts/{alias}</h6>
+                                <span class="method-badge method-delete">DELETE</span>
+                            </div>
+                            <p class="mb-2" data-i18n="delete_account_desc">删除指定的账户</p>
+                            <h6 class="fw-bold mb-1" data-i18n="path_params">路径参数：</h6>
+                            <pre>alias: 账户别名</pre>
+                            <h6 class="fw-bold mb-1 mt-2" data-i18n="response_format">响应格式：</h6>
+                            <pre>{"status": "success", "message": "账户已删除"}</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RPC 管理 API -->
+                <div id="rpc-api" class="card mb-4 section">
+                    <div class="card-header bg-warning text-white">
+                        <i class="bi bi-geo-alt me-2"></i><span data-i18n="rpc_api">RPC 管理 API</span>
+                    </div>
+                    <div class="card-body">
+                        <!-- 获取 RPC 列表 -->
+                        <div class="api-card bg-light p-4 mb-4 rounded">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold">GET /api/rpcs</h6>
+                                <span class="method-badge method-get">GET</span>
+                            </div>
+                            <p class="mb-2" data-i18n="get_rpcs_desc">获取当前用户的 RPC 节点列表</p>
+                            <h6 class="fw-bold mb-1" data-i18n="response_format">响应格式：</h6>
+                            <pre>{"status": "success", "message": "Success", "data": [{"chain_id": "1", "alias": "Ethereum Mainnet", "rpc_url": "https://..."}, ...]}</pre>
+                        </div>
+
+                        <!-- 添加 RPC -->
+                        <div class="api-card bg-light p-4 mb-4 rounded">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold">POST /api/rpcs</h6>
+                                <span class="method-badge method-post">POST</span>
+                            </div>
+                            <p class="mb-2" data-i18n="add_rpc_desc">添加新的 RPC 节点</p>
+                            <h6 class="fw-bold mb-1" data-i18n="request_body">请求体：</h6>
+                            <pre>{"chain_id": 1, "alias": "Ethereum Mainnet", "rpc_url": "https://..."}</pre>
+                            <h6 class="fw-bold mb-1 mt-2" data-i18n="response_format">响应格式：</h6>
+                            <pre>{"status": "success", "message": "RPC 已保存"}</pre>
+                        </div>
+
+                        <!-- 删除 RPC -->
+                        <div class="api-card bg-light p-4 rounded">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold">DELETE /api/rpcs/{chain_id}</h6>
+                                <span class="method-badge method-delete">DELETE</span>
+                            </div>
+                            <p class="mb-2" data-i18n="delete_rpc_desc">删除指定的 RPC 节点</p>
+                            <h6 class="fw-bold mb-1" data-i18n="path_params">路径参数：</h6>
+                            <pre>chain_id: 链 ID</pre>
+                            <h6 class="fw-bold mb-1 mt-2" data-i18n="response_format">响应格式：</h6>
+                            <pre>{"status": "success", "message": "RPC 已删除"}</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ABI 管理 API -->
+                <div id="abi-api" class="card mb-4 section">
+                    <div class="card-header bg-success text-white">
+                        <i class="bi bi-file-code me-2"></i><span data-i18n="abi_api">ABI 管理 API</span>
+                    </div>
+                    <div class="card-body">
+                        <!-- 上传 ABI -->
+                        <div class="api-card bg-light p-4 mb-4 rounded">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold">POST /upload_abi</h6>
+                                <span class="method-badge method-post">POST</span>
+                            </div>
+                            <p class="mb-2" data-i18n="upload_abi_desc">上传新的 ABI 文件</p>
+                            <h6 class="fw-bold mb-1" data-i18n="request_body">请求体：</h6>
+                            <pre>{"abi_name": "Token", "abi_content": [...]}</pre>
+                            <h6 class="fw-bold mb-1 mt-2" data-i18n="response_format">响应格式：</h6>
+                            <pre>{"status": "success", "message": "ABI 'Token' uploaded successfully"}</pre>
+                        </div>
+
+                        <!-- 删除 ABI -->
+                        <div class="api-card bg-light p-4 mb-4 rounded">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold">DELETE /delete_abi</h6>
+                                <span class="method-badge method-delete">DELETE</span>
+                            </div>
+                            <p class="mb-2" data-i18n="delete_abi_desc">删除指定的 ABI 文件</p>
+                            <h6 class="fw-bold mb-1" data-i18n="query_params">查询参数：</h6>
+                            <pre>abi_name: ABI 名称</pre>
+                            <h6 class="fw-bold mb-1 mt-2" data-i18n="response_format">响应格式：</h6>
+                            <pre>{"status": "success", "message": "ABI 'Token' deleted successfully"}</pre>
+                        </div>
+
+                        <!-- 列出 ABI -->
+                        <div class="api-card bg-light p-4 mb-4 rounded">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold">GET /list_abis</h6>
+                                <span class="method-badge method-get">GET</span>
+                            </div>
+                            <p class="mb-2" data-i18n="list_abis_desc">列出所有可用的 ABI 文件</p>
+                            <h6 class="fw-bold mb-1" data-i18n="response_format">响应格式：</h6>
+                            <pre>{"status": "success", "message": "Success", "data": {"abis": ["Token", "ERC20", ...]}}</pre>
+                        </div>
+
+                        <!-- 获取 ABI 详情 -->
+                        <div class="api-card bg-light p-4 rounded">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold">GET /get_abi_details</h6>
+                                <span class="method-badge method-get">GET</span>
+                            </div>
+                            <p class="mb-2" data-i18n="get_abi_details_desc">获取 ABI 的详细信息，包括函数、事件、错误等分类</p>
+                            <h6 class="fw-bold mb-1" data-i18n="query_params">查询参数：</h6>
+                            <pre>abi_name: ABI 名称</pre>
+                            <h6 class="fw-bold mb-1 mt-2" data-i18n="response_format">响应格式：</h6>
+                            <pre>{"status": "success", "message": "Success", "data": {"details": {...}, "full_abi": [...]}}</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 合约交互 API -->
+                <div id="contract-api" class="card mb-4 section">
+                    <div class="card-header bg-dark text-white">
+                        <i class="bi bi-exchange me-2"></i><span data-i18n="contract_api">合约交互 API</span>
+                    </div>
+                    <div class="card-body">
+                        <!-- 读取合约 -->
+                        <div class="api-card bg-light p-4 mb-4 rounded">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold">POST /read_contract</h6>
+                                <span class="method-badge method-post">POST</span>
+                            </div>
+                            <p class="mb-2" data-i18n="read_contract_desc">调用合约的只读方法（View/Pure）</p>
+                            <h6 class="fw-bold mb-1" data-i18n="request_body">请求体：</h6>
+                            <pre>{"contract_address": "0x...", "abi_name": "Token", "method_name": "balanceOf", "args": ["0x..."], "chain_id": 1}</pre>
+                            <h6 class="fw-bold mb-1 mt-2" data-i18n="response_format">响应格式：</h6>
+                            <pre>{"status": "success", "message": "Success", "data": {"result": "1000000000000000000"}}</pre>
+                        </div>
+
+                        <!-- 写入合约 -->
+                        <div class="api-card bg-light p-4 rounded">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold">POST /write_contract</h6>
+                                <span class="method-badge method-post">POST</span>
+                            </div>
+                            <p class="mb-2" data-i18n="write_contract_desc">调用合约的写入方法（改变合约状态）</p>
+                            <h6 class="fw-bold mb-1" data-i18n="request_body">请求体：</h6>
+                            <pre>{"contract_address": "0x...", "abi_name": "Token", "method_name": "transfer", "args": ["0x...", "1000000000000000000"], "chain_id": 1, "account_alias": "account1"}</pre>
+                            <h6 class="fw-bold mb-1 mt-2" data-i18n="response_format">响应格式：</h6>
+                            <pre>{"status": "success", "message": "Success", "data": {"tx_hash": "0x..."}}</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 事件查询 API -->
+                <div id="event-api" class="card mb-4 section">
+                    <div class="card-header bg-info text-white">
+                        <i class="bi bi-calendar-event me-2"></i><span data-i18n="event_api">事件查询 API</span>
+                    </div>
+                    <div class="card-body">
+                        <!-- 获取事件日志 -->
+                        <div class="api-card bg-light p-4 rounded">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold">POST /get_events</h6>
+                                <span class="method-badge method-post">POST</span>
+                            </div>
+                            <p class="mb-2" data-i18n="get_events_desc">查询指定合约的事件日志</p>
+                            <h6 class="fw-bold mb-1" data-i18n="request_body">请求体：</h6>
+                            <pre>{"contract_address": "0x...", "abi_name": "Token", "event_name": "Transfer", "from_block": 0, "to_block": "latest", "argument_filters": {"from": "0x..."}, "chain_id": 1}</pre>
+                            <h6 class="fw-bold mb-1 mt-2" data-i18n="response_format">响应格式：</h6>
+                            <pre>{"status": "success", "message": "Success", "data": {"event_logs": [...]}}</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 交易相关 API -->
+                <div id="transaction-api" class="card mb-4 section">
+                    <div class="card-header bg-warning text-white">
+                        <i class="bi bi-exchange me-2"></i><span data-i18n="transaction_api">交易相关 API</span>
+                    </div>
+                    <div class="card-body">
+                        <!-- 获取交易回执 -->
+                        <div class="api-card bg-light p-4 mb-4 rounded">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold">POST /get_transaction_receipt</h6>
+                                <span class="method-badge method-post">POST</span>
+                            </div>
+                            <p class="mb-2" data-i18n="get_transaction_receipt_desc">获取交易的详细信息</p>
+                            <h6 class="fw-bold mb-1" data-i18n="request_body">请求体：</h6>
+                            <pre>{"transaction_hash": "0x...", "chain_id": 1}</pre>
+                            <h6 class="fw-bold mb-1 mt-2" data-i18n="response_format">响应格式：</h6>
+                            <pre>{"status": "success", "message": "Success", "data": {"receipt": {...}}}</pre>
+                        </div>
+
+                        <!-- 解码交易数据 -->
+                        <div class="api-card bg-light p-4 rounded">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold">POST /decode_transaction</h6>
+                                <span class="method-badge method-post">POST</span>
+                            </div>
+                            <p class="mb-2" data-i18n="decode_transaction_desc">解码交易输入数据</p>
+                            <h6 class="fw-bold mb-1" data-i18n="request_body">请求体：</h6>
+                            <pre>{"encoded_data": "0x...", "abi_name": "Token"}</pre>
+                            <h6 class="fw-bold mb-1 mt-2" data-i18n="response_format">响应格式：</h6>
+                            <pre>{"status": "success", "message": "Success", "data": {"function_name": "transfer", "parameters": {...}}}</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 历史记录 API -->
+                <div id="history-api" class="card mb-4 section">
+                    <div class="card-header bg-success text-white">
+                        <i class="bi bi-clock-history me-2"></i><span data-i18n="history_api">历史记录 API</span>
+                    </div>
+                    <div class="card-body">
+                        <!-- 获取历史记录 -->
+                        <div class="api-card bg-light p-4 mb-4 rounded">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold">GET /api/history</h6>
+                                <span class="method-badge method-get">GET</span>
+                            </div>
+                            <p class="mb-2" data-i18n="get_history_desc">获取当前用户的调用历史记录</p>
+                            <h6 class="fw-bold mb-1" data-i18n="response_format">响应格式：</h6>
+                            <pre>{"status": "success", "message": "Success", "data": [{"id": "...", "timestamp": "...", "type": "read", "contract": "0x...", "method": "balanceOf", "args": [...], "result": "..."}, ...]}</pre>
+                        </div>
+
+                        <!-- 清空历史记录 -->
+                        <div class="api-card bg-light p-4 rounded">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold">POST /api/history/clear</h6>
+                                <span class="method-badge method-post">POST</span>
+                            </div>
+                            <p class="mb-2" data-i18n="clear_history_desc">清空当前用户的调用历史记录</p>
+                            <h6 class="fw-bold mb-1" data-i18n="response_format">响应格式：</h6>
+                            <pre>{"status": "success", "message": "History cleared"}</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 配置管理 API -->
+                <div id="config-api" class="card mb-4 section">
+                    <div class="card-header bg-secondary text-white">
+                        <i class="bi bi-gear me-2"></i><span data-i18n="config_api">配置管理 API</span>
+                    </div>
+                    <div class="card-body">
+                        <!-- 获取配置信息 -->
+                        <div class="api-card bg-light p-4 rounded">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold">GET /get_configs</h6>
+                                <span class="method-badge method-get">GET</span>
+                            </div>
+                            <p class="mb-2" data-i18n="get_configs_desc">获取当前配置的账户别名和链别名/ID 列表</p>
+                            <h6 class="fw-bold mb-1" data-i18n="response_format">响应格式：</h6>
+                            <pre>{"status": "success", "message": "Success", "data": {"accounts": ["account1", "account2"], "chains": [{"chain_id": "1", "alias": "Ethereum Mainnet", "rpc_url": "https://..."}, ...]}}</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 语言切换功能
+        const translations = {
+            'zh': {
+                'nav_title': 'EVM API 控制面板',
+                'back_home': '返回首页',
+                'usage_guide': '使用说明',
+                'dev_docs': '开发文档',
+                'lang_btn': 'English',
+                'toc_title': '目录',
+                'api_overview': 'API 概述',
+                'api_overview_desc': 'EVM API 控制面板提供了一系列 RESTful API，用于管理账户、RPC 节点、ABI 文件，以及与智能合约进行交互。所有 API 都需要通过 X-API-Token 进行认证。',
+                'api_features': 'API 特性：',
+                'api_feature_1': 'RESTful 设计风格',
+                'api_feature_2': '统一的错误处理和响应格式',
+                'api_feature_3': '支持多链节点切换',
+                'api_feature_4': '完整的智能合约交互功能',
+                'api_feature_5': '支持 MetaMask 集成',
+                'authentication': '认证方式',
+                'auth_desc': '所有 API 接口都需要通过 X-API-Token 进行认证。登录后，系统会返回一个 Token，您需要在每次请求时将该 Token 放在请求头中。',
+                'auth_header': '认证请求头：',
+                'auth_example': '使用示例：',
+                'account_api': '账户管理 API',
+                'get_accounts_desc': '获取当前用户的账户列表',
+                'add_account_desc': '添加新的账户',
+                'delete_account_desc': '删除指定的账户',
+                'rpc_api': 'RPC 管理 API',
+                'get_rpcs_desc': '获取当前用户的 RPC 节点列表',
+                'add_rpc_desc': '添加新的 RPC 节点',
+                'delete_rpc_desc': '删除指定的 RPC 节点',
+                'abi_api': 'ABI 管理 API',
+                'upload_abi_desc': '上传新的 ABI 文件',
+                'delete_abi_desc': '删除指定的 ABI 文件',
+                'list_abis_desc': '列出所有可用的 ABI 文件',
+                'get_abi_details_desc': '获取 ABI 的详细信息，包括函数、事件、错误等分类',
+                'contract_api': '合约交互 API',
+                'read_contract_desc': '调用合约的只读方法（View/Pure）',
+                'write_contract_desc': '调用合约的写入方法（改变合约状态）',
+                'event_api': '事件查询 API',
+                'get_events_desc': '查询指定合约的事件日志',
+                'transaction_api': '交易相关 API',
+                'get_transaction_receipt_desc': '获取交易的详细信息',
+                'decode_transaction_desc': '解码交易输入数据',
+                'history_api': '历史记录 API',
+                'get_history_desc': '获取当前用户的调用历史记录',
+                'clear_history_desc': '清空当前用户的调用历史记录',
+                'config_api': '配置管理 API',
+                'get_configs_desc': '获取当前配置的账户别名和链别名/ID 列表',
+                'request_body': '请求体：',
+                'response_format': '响应格式：',
+                'path_params': '路径参数：',
+                'query_params': '查询参数：'
+            },
+            'en': {
+                'nav_title': 'EVM API Dashboard',
+                'back_home': 'Back to Home',
+                'usage_guide': 'Usage Guide',
+                'dev_docs': 'Developer Docs',
+                'lang_btn': '中文',
+                'toc_title': 'Table of Contents',
+                'api_overview': 'API Overview',
+                'api_overview_desc': 'EVM API Dashboard provides a series of RESTful APIs for managing accounts, RPC nodes, ABI files, and interacting with smart contracts. All APIs require authentication via X-API-Token.',
+                'api_features': 'API Features:',
+                'api_feature_1': 'RESTful design style',
+                'api_feature_2': 'Unified error handling and response format',
+                'api_feature_3': 'Support for multi-chain node switching',
+                'api_feature_4': 'Complete smart contract interaction functionality',
+                'api_feature_5': 'Support for MetaMask integration',
+                'authentication': 'Authentication',
+                'auth_desc': 'All API endpoints require authentication via X-API-Token. After logging in, the system will return a token, which you need to include in the request header for each request.',
+                'auth_header': 'Authentication Header:',
+                'auth_example': 'Usage Example:',
+                'account_api': 'Account Management API',
+                'get_accounts_desc': 'Get the list of current user accounts',
+                'add_account_desc': 'Add a new account',
+                'delete_account_desc': 'Delete a specified account',
+                'rpc_api': 'RPC Management API',
+                'get_rpcs_desc': 'Get the list of current user RPC nodes',
+                'add_rpc_desc': 'Add a new RPC node',
+                'delete_rpc_desc': 'Delete a specified RPC node',
+                'abi_api': 'ABI Management API',
+                'upload_abi_desc': 'Upload a new ABI file',
+                'delete_abi_desc': 'Delete a specified ABI file',
+                'list_abis_desc': 'List all available ABI files',
+                'get_abi_details_desc': 'Get detailed information about ABI, including functions, events, errors, etc.',
+                'contract_api': 'Contract Interaction API',
+                'read_contract_desc': 'Call read-only methods of contracts (View/Pure)',
+                'write_contract_desc': 'Call write methods of contracts (change contract state)',
+                'event_api': 'Event Query API',
+                'get_events_desc': 'Query event logs of specified contracts',
+                'transaction_api': 'Transaction Related API',
+                'get_transaction_receipt_desc': 'Get detailed information about transactions',
+                'decode_transaction_desc': 'Decode transaction input data',
+                'history_api': 'History API',
+                'get_history_desc': 'Get current user\'s call history',
+                'clear_history_desc': 'Clear current user\'s call history',
+                'config_api': 'Configuration Management API',
+                'get_configs_desc': 'Get current configured account aliases and chain aliases/IDs',
+                'request_body': 'Request Body:',
+                'response_format': 'Response Format:',
+                'path_params': 'Path Parameters:',
+                'query_params': 'Query Parameters:'
+            }
+        };
+
+        let currentLang = localStorage.getItem('lang') || 'zh';
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            localStorage.setItem('lang', currentLang);
+            updateUI();
+        }
+
+        function updateUI() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[currentLang][key]) {
+                    el.innerText = translations[currentLang][key];
+                }
+            });
+            document.getElementById('lang-btn').innerText = translations[currentLang]['lang_btn'];
+        }
+
+        // 初始化页面
+        updateUI();
+    </script>
+</body>
+</html>

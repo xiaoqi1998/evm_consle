@@ -1,0 +1,221 @@
+/* ==========================================================================
+   EVM API 控制面板 核心样式表
+   优化重点：防止长字符串溢出、固定表格布局、美化交互组件
+   ========================================================================== */
+
+:root {
+    --primary-color: #4f46e5;
+    --primary-hover: #4338ca;
+    --bg-light: #f9fafb;
+    --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --code-bg: #1e293b;
+    --code-text: #e2e8f0;
+}
+
+body { 
+    background-color: var(--bg-light); 
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    color: #1f2937;
+    line-height: 1.5;
+}
+
+/* --- 1. 导航栏与全局组件 --- */
+.navbar {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+    padding: 0.75rem 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.card { 
+    border: none; 
+    border-radius: 12px; 
+    box-shadow: var(--card-shadow); 
+    transition: var(--transition);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+/* --- 2. 核心修复：代码块与长字符串处理 --- */
+pre { 
+    background: var(--code-bg); 
+    color: var(--code-text);
+    padding: 1rem; 
+    border-radius: 8px; 
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.8rem;
+    line-height: 1.6;
+    
+    /* 关键属性：强制换行 */
+    white-space: pre-wrap;       /* 保持空白符，但允许自动换行 */
+    word-wrap: break-word;       /* 允许在长单词内换行 */
+    word-break: break-all;       /* 针对哈希值等无空格长字符强制断行 */
+    
+    /* 限制高度防止撑开页面 */
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* 自定义滚动条样式 (针对 Webkit 浏览器) */
+pre::-webkit-scrollbar {
+    width: 6px;
+}
+pre::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.2);
+    border-radius: 3px;
+}
+
+/* --- 3. 核心修复：历史记录表格布局 --- */
+.history-table {
+    table-layout: fixed; /* 强制列宽遵从设置，不会被长内容撑开 */
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.history-table th, 
+.history-table td {
+    padding: 12px 15px;
+    vertical-align: top;
+    overflow: hidden; /* 溢出隐藏 */
+}
+
+/* 精确控制每一列的宽度占比 */
+.col-time    { width: 140px; }
+.col-type    { width: 80px; }
+.col-method  { width: 20%; }
+.col-params  { width: 20%; }
+.col-result  { width: auto; } /* 剩余空间分配给结果列 */
+.col-actions { width: 100px; text-align: center; }
+
+/* 文本截断类 */
+.text-truncate-custom {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* --- 4. 折叠面板与按钮交互 --- */
+.collapsible-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+    background: #f1f5f9;
+    border-radius: 6px;
+    margin-top: 5px;
+}
+
+.collapsible-content.show {
+    max-height: 500px;
+    padding: 10px;
+    border: 1px solid #e2e8f0;
+    overflow-y: auto;
+}
+
+.toggle-btn {
+    cursor: pointer;
+    color: var(--primary-color);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.toggle-btn:hover {
+    color: var(--primary-hover);
+    text-decoration: underline;
+}
+
+/* --- 5. 侧边栏样式优化 --- */
+.sidebar-section-title {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05rem;
+    color: #94a3b8;
+    margin: 1.5rem 1rem 0.5rem;
+    font-weight: 700;
+}
+
+.list-group-item {
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+    border-left: 3px solid transparent;
+    transition: var(--transition);
+}
+
+.list-group-item:hover {
+    background-color: #f8fafc;
+    border-left-color: var(--primary-color);
+}
+.list-group:empty::after {
+    content: "登录后查看您的配置...";
+    font-size: 0.8rem;
+    color: #999;
+    padding: 10px;
+}
+/* SEO 底部区块：最终清晰版 */
+.seo-footer-compact {
+    background: #0f172a; 
+    color: #cbd5e1; 
+    padding: 30px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    margin-top: 50px;
+}
+
+/* 标题：纯白色，加粗 */
+.seo-footer-compact h2, 
+.seo-footer-compact h5 {
+    color: #ffffff !important; 
+    font-weight: 700;
+}
+
+.seo-footer-compact .feature-item {
+    border-left: 3px solid var(--primary-color);
+    padding-left: 15px;
+}
+
+/* 底部标签行优化 */
+.ecosystem-label {
+    color: #ffffff !important; /* 强制白色，确保看清 */
+    font-weight: 600;
+    font-size: 0.85rem; /* 增大字号 */
+    margin-right: 12px;
+}
+
+.network-tag {
+    background: rgba(255, 255, 255, 0.1); /* 稍微加深背景 */
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #f8fafc !important; /* 标签文字也设为亮白色 */
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem; /* 增大字号 */
+    margin: 2px 5px 2px 0;
+    display: inline-block;
+    white-space: nowrap;
+}
+
+/* 全链支持高亮标签 */
+.evm-all-badge {
+    background: linear-gradient(90deg, #4f46e5, #06b6d4);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+/* --- 6. 辅助工具类 --- */
+.x-small { font-size: 0.75rem; }
+.badge { font-weight: 500; padding: 0.4em 0.6em; }
+
+/* 响应式调整 */
+@media (max-width: 992px) {
+    .history-table {
+        table-layout: auto; /* 在小屏幕上恢复自动布局以允许横向滚动 */
+    }
+    .col-time, .col-type, .col-method, .col-params, .col-actions {
+        width: auto;
+    }
+}

@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EVM API 管理后台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --secondary-color: #6366f1;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --success-color: #22c55e;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+        }
+
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(180deg, #1e1b4b 0%, #312e81 100%);
+            color: white;
+        }
+
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.7);
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin: 4px 0;
+            transition: all 0.2s;
+        }
+
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.15);
+            color: white;
+        }
+
+        .sidebar .nav-link i {
+            margin-right: 10px;
+        }
+
+        .main-content {
+            padding: 24px;
+        }
+
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            background: var(--card-bg);
+        }
+
+        .stat-card {
+            padding: 20px;
+            border-radius: 12px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+        }
+
+        .stat-card .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .stat-card .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .stat-card .stat-label {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .table-container {
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .table thead th {
+            background: #f1f5f9;
+            border: none;
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            padding: 14px 16px;
+        }
+
+        .table td {
+            padding: 14px 16px;
+            vertical-align: middle;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .badge-status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-active {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-disabled {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .btn-action {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+        }
+
+        .login-card {
+            width: 400px;
+            padding: 40px;
+            border-radius: 16px;
+            background: white;
+        }
+
+        .modal-header {
+            border-bottom: 1px solid var(--border-color);
+            padding: 16px 24px;
+        }
+
+        .modal-footer {
+            border-top: 1px solid var(--border-color);
+            padding: 16px 24px;
+        }
+
+        .json-viewer {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .nav-tabs .nav-link {
+            border: none;
+            color: var(--text-secondary);
+            padding: 12px 20px;
+        }
+
+        .nav-tabs .nav-link.active {
+            border-bottom: 3px solid var(--primary-color);
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .api-endpoint {
+            background: #f1f5f9;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .method-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            margin-right: 8px;
+        }
+
+        .method-get { background: #dbeafe; color: #1e40af; }
+        .method-post { background: #dcfce7; color: #166534; }
+        .method-delete { background: #fee2e2; color: #991b1b; }
+        .method-put { background: #fef3c7; color: #92400e; }
+    </style>
+</head>
+<body>
+    <div id="loginSection" class="login-container" style="display: none;">
+        <div class="login-card">
+            <div class="text-center mb-4">
+                <i class="bi bi-shield-lock" style="font-size: 48px; color: var(--primary-color);"></i>
+                <h3 class="mt-3">管理后台</h3>
+                <p class="text-muted">请使用管理员账号登录</p>
+            </div>
+            <form id="loginForm">
+                <div class="mb-3">
+                    <label class="form-label">用户名</label>
+                    <input type="text" class="form-control" id="adminUsername" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">密码</label>
+                    <input type="password" class="form-control" id="adminPassword" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">登录</button>
+            </form>
+            <div class="text-center mt-3">
+                <a href="/" class="text-muted">返回主站</a>
+            </div>
+        </div>
+    </div>
+
+    <div id="adminSection" style="display: none;">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-2 sidebar p-3">
+                    <div class="text-center mb-4 pt-3">
+                        <i class="bi bi-gem" style="font-size: 32px;"></i>
+                        <h5 class="mt-2">EVM API</h5>
+                        <small class="text-white-50">管理后台</small>
+                    </div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#" onclick="showSection('dashboard')">
+                                <i class="bi bi-speedometer2"></i> 仪表盘
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="showSection('users')">
+                                <i class="bi bi-people"></i> 用户管理
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="showSection('api')">
+                                <i class="bi bi-code-slash"></i> API 文档
+                            </a>
+                        </li>
+                        <li class="nav-item mt-5">
+                            <a class="nav-link" href="#" onclick="logout()">
+                                <i class="bi bi-box-arrow-right"></i> 退出登录
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="col-md-10 main-content">
+                    <div id="dashboardSection">
+                        <h4 class="mb-4">仪表盘</h4>
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <div class="stat-card">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <div class="stat-value" id="totalUsers">-</div>
+                                            <div class="stat-label">总用户数</div>
+                                        </div>
+                                        <div class="stat-icon" style="background: #dbeafe; color: #1e40af;">
+                                            <i class="bi bi-people"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-card">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <div class="stat-value" id="activeUsers">-</div>
+                                            <div class="stat-label">活跃用户</div>
+                                        </div>
+                                        <div class="stat-icon" style="background: #dcfce7; color: #166534;">
+                                            <i class="bi bi-person-check"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-card">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <div class="stat-value" id="disabledUsers">-</div>
+                                            <div class="stat-label">已禁用用户</div>
+                                        </div>
+                                        <div class="stat-icon" style="background: #fee2e2; color: #991b1b;">
+                                            <i class="bi bi-person-x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-card">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <div class="stat-value" id="totalCalls">-</div>
+                                            <div class="stat-label">总调用次数</div>
+                                        </div>
+                                        <div class="stat-icon" style="background: #fef3c7; color: #92400e;">
+                                            <i class="bi bi-lightning"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card p-3">
+                                    <h6 class="mb-3">账户统计</h6>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>总账户数</span>
+                                        <strong id="totalAccounts">-</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>总 RPC 配置</span>
+                                        <strong id="totalRpcs">-</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card p-3">
+                                    <h6 class="mb-3">快速操作</h6>
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        <button class="btn btn-primary btn-sm" onclick="showSection('users')">
+                                            <i class="bi bi-people"></i> 管理用户
+                                        </button>
+                                        <button class="btn btn-outline-primary btn-sm" onclick="loadUsers()">
+                                            <i class="bi bi-arrow-clockwise"></i> 刷新数据
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="usersSection" style="display: none;">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h4>用户管理</h4>
+                            <button class="btn btn-outline-primary btn-sm" onclick="loadUsers()">
+                                <i class="bi bi-arrow-clockwise"></i> 刷新
+                            </button>
+                        </div>
+
+                        <div class="table-container">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>用户名</th>
+                                        <th>Token</th>
+                                        <th>账户数</th>
+                                        <th>RPC数</th>
+                                        <th>调用次数</th>
+                                        <th>状态</th>
+                                        <th>最后活动</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usersTableBody">
+                                    <tr>
+                                        <td colspan="8" class="text-center text-muted">加载中...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div id="apiSection" style="display: none;">
+                        <h4 class="mb-4">API 接口文档</h4>
+                        <div class="card p-4">
+                            <h6 class="mb-3">认证接口</h6>
+                            <div class="api-endpoint">
+                                <span class="method-badge method-post">POST</span>
+                                /admin/login - 管理员登录
+                            </div>
+                            <div class="api-endpoint">
+                                <span class="method-badge method-post">POST</span>
+                                /admin/logout - 退出登录
+                            </div>
+
+                            <h6 class="mb-3 mt-4">用户管理接口</h6>
+                            <div class="api-endpoint">
+                                <span class="method-badge method-get">GET</span>
+                                /admin/users - 获取所有用户列表
+                            </div>
+                            <div class="api-endpoint">
+                                <span class="method-badge method-get">GET</span>
+                                /admin/users/{username} - 获取用户详情
+                            </div>
+                            <div class="api-endpoint">
+                                <span class="method-badge method-post">POST</span>
+                                /admin/users/{username}/disable - 禁用用户
+                            </div>
+                            <div class="api-endpoint">
+                                <span class="method-badge method-post">POST</span>
+                                /admin/users/{username}/enable - 启用用户
+                            </div>
+                            <div class="api-endpoint">
+                                <span class="method-badge method-post">POST</span>
+                                /admin/users/{username}/reset_password - 重置密码
+                            </div>
+
+                            <h6 class="mb-3 mt-4">RPC 管理接口</h6>
+                            <div class="api-endpoint">
+                                <span class="method-badge method-get">GET</span>
+                                /admin/users/{username}/rpcs - 获取用户 RPC 配置
+                            </div>
+                            <div class="api-endpoint">
+                                <span class="method-badge method-post">POST</span>
+                                /admin/users/{username}/rpcs - 设置用户 RPC
+                            </div>
+                            <div class="api-endpoint">
+                                <span class="method-badge method-delete">DELETE</span>
+                                /admin/users/{username}/rpcs/{chain_id} - 删除用户 RPC
+                            </div>
+
+                            <h6 class="mb-3 mt-4">账户管理接口</h6>
+                            <div class="api-endpoint">
+                                <span class="method-badge method-get">GET</span>
+                                /admin/users/{username}/accounts - 获取用户账户(含私钥)
+                            </div>
+                            <div class="api-endpoint">
+                                <span class="method-badge method-post">POST</span>
+                                /admin/users/{username}/accounts - 添加用户账户
+                            </div>
+                            <div class="api-endpoint">
+                                <span class="method-badge method-delete">DELETE</span>
+                                /admin/users/{username}/accounts/{alias} - 删除用户账户
+                            </div>
+
+                            <h6 class="mb-3 mt-4">调用历史接口</h6>
+                            <div class="api-endpoint">
+                                <span class="method-badge method-get">GET</span>
+                                /admin/users/{username}/history - 获取用户调用历史
+                            </div>
+
+                            <h6 class="mb-3 mt-4">统计接口</h6>
+                            <div class="api-endpoint">
+                                <span class="method-badge method-get">GET</span>
+                                /admin/stats - 获取系统统计
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="userDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="userDetailTitle">用户详情</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="nav nav-tabs" id="userDetailTabs" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabInfo">基本信息</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabAccounts">账户 & 私钥</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabRpcs">RPC 配置</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabHistory">调用历史</button>
+                        </li>
+                    </ul>
+                    <div class="tab-content mt-3">
+                        <div class="tab-pane fade show active" id="tabInfo">
+                            <div id="userInfoContent"></div>
+                        </div>
+                        <div class="tab-pane fade" id="tabAccounts">
+                            <div id="userAccountsContent"></div>
+                        </div>
+                        <div class="tab-pane fade" id="tabRpcs">
+                            <div class="mb-3">
+                                <button class="btn btn-sm btn-primary" onclick="showAddRpcModal()">
+                                    <i class="bi bi-plus"></i> 添加 RPC
+                                </button>
+                            </div>
+                            <div id="userRpcsContent"></div>
+                        </div>
+                        <div class="tab-pane fade" id="tabHistory">
+                            <div id="userHistoryContent"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="resetPasswordModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">重置密码</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="resetPasswordUsername">
+                    <div class="mb-3">
+                        <label class="form-label">新密码</label>
+                        <input type="password" class="form-control" id="newPassword">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="confirmResetPassword()">确认重置</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="addRpcModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">添加 RPC</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="addRpcUsername">
+                    <div class="mb-3">
+                        <label class="form-label">Chain ID</label>
+                        <input type="text" class="form-control" id="addRpcChainId">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">RPC URL</label>
+                        <input type="text" class="form-control" id="addRpcUrl">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">别名</label>
+                        <input type="text" class="form-control" id="addRpcAlias">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="confirmAddRpc()">确认添加</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsencrypt/3.3.2/jsencrypt.min.js"></script>
+    <script>
+        const ADMIN_API = '';
+
+        let currentModalUsername = null;
+
+        async function apiCall(url, options = {}) {
+            const response = await fetch(url, {
+                ...options,
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                }
+            });
+            return response.json();
+        }
+
+        async function checkAuth() {
+            try {
+                const result = await apiCall(ADMIN_API + '/admin/check_auth');
+                if (result.status === 'success') {
+                    document.getElementById('loginSection').style.display = 'none';
+                    document.getElementById('adminSection').style.display = 'block';
+                    loadStats();
+                    loadUsers();
+                } else {
+                    showLogin();
+                }
+            } catch (e) {
+                showLogin();
+            }
+        }
+
+        function showLogin() {
+            document.getElementById('loginSection').style.display = 'flex';
+            document.getElementById('adminSection').style.display = 'none';
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('adminUsername').value;
+            const password = document.getElementById('adminPassword').value;
+
+            const result = await apiCall(ADMIN_API + '/admin/login', {
+                method: 'POST',
+                body: JSON.stringify({ username, password })
+            });
+
+            if (result.status === 'success') {
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('adminSection').style.display = 'block';
+                loadStats();
+                loadUsers();
+            } else {
+                alert(result.message || '登录失败');
+            }
+        });
+
+        async function logout() {
+            await apiCall(ADMIN_API + '/admin/logout', { method: 'POST' });
+            showLogin();
+        }
+
+        function showSection(section) {
+            document.querySelectorAll('.sidebar .nav-link').forEach(link => link.classList.remove('active'));
+            event.target.closest('.nav-link').classList.add('active');
+
+            document.getElementById('dashboardSection').style.display = 'none';
+            document.getElementById('usersSection').style.display = 'none';
+            document.getElementById('apiSection').style.display = 'none';
+
+            document.getElementById(section + 'Section').style.display = 'block';
+
+            if (section === 'dashboard') loadStats();
+            if (section === 'users') loadUsers();
+        }
+
+        async function loadStats() {
+            const result = await apiCall(ADMIN_API + '/admin/stats');
+            if (result.status === 'success') {
+                document.getElementById('totalUsers').textContent = result.data.total_users;
+                document.getElementById('activeUsers').textContent = result.data.active_users;
+                document.getElementById('disabledUsers').textContent = result.data.disabled_users;
+                document.getElementById('totalCalls').textContent = result.data.total_history;
+                document.getElementById('totalAccounts').textContent = result.data.total_accounts;
+                document.getElementById('totalRpcs').textContent = result.data.total_rpcs;
+            }
+        }
+
+        async function loadUsers() {
+            const result = await apiCall(ADMIN_API + '/admin/users');
+            if (result.status === 'success') {
+                const tbody = document.getElementById('usersTableBody');
+                if (result.data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">暂无用户</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = result.data.map(user => `
+                    <tr>
+                        <td><strong>${user.username}</strong></td>
+                        <td><code class="text-muted" style="font-size: 11px;">${user.token.substring(0, 20)}...</code></td>
+                        <td>${user.account_count}</td>
+                        <td>${user.rpc_count}</td>
+                        <td>${user.history_count}</td>
+                        <td>
+                            <span class="badge-status ${user.is_disabled ? 'badge-disabled' : 'badge-active'}">
+                                ${user.is_disabled ? '已禁用' : '正常'}
+                            </span>
+                        </td>
+                        <td>${user.last_activity || '-'}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary btn-action" onclick="viewUser('${user.username}')">
+                                <i class="bi bi-eye"></i> 详情
+                            </button>
+                            ${user.is_disabled
+                                ? `<button class="btn btn-sm btn-outline-success btn-action" onclick="enableUser('${user.username}')">启用</button>`
+                                : `<button class="btn btn-sm btn-outline-danger btn-action" onclick="disableUser('${user.username}')">禁用</button>`
+                            }
+                            <button class="btn btn-sm btn-outline-warning btn-action" onclick="showResetPassword('${user.username}')">
+                                <i class="bi bi-key"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        async function viewUser(username) {
+            currentModalUsername = username;
+            document.getElementById('userDetailTitle').textContent = `用户详情 - ${username}`;
+
+            const result = await apiCall(ADMIN_API + `/admin/users/${username}`);
+            if (result.status === 'success') {
+                const user = result.data;
+
+                document.getElementById('userInfoContent').innerHTML = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>用户名:</strong> ${user.username}</p>
+                            <p><strong>Token:</strong> <code>${user.token}</code></p>
+                            <p><strong>状态:</strong> <span class="badge-status ${user.is_disabled ? 'badge-disabled' : 'badge-active'}">${user.is_disabled ? '已禁用' : '正常'}</span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>创建时间:</strong> ${user.created_at}</p>
+                            <p><strong>ABI 数量:</strong> ${user.abis.length}</p>
+                            <p><strong>已删除默认 RPC:</strong> ${user.deleted_default_rpcs.length > 0 ? user.deleted_default_rpcs.join(', ') : '无'}</p>
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('userAccountsContent').innerHTML = Object.keys(user.accounts).length > 0
+                    ? `<div class="table-responsive"><table class="table table-sm"><thead><tr><th>别名</th><th>地址</th><th>私钥</th><th>操作</th></tr></thead><tbody>${Object.entries(user.accounts).map(([alias, acc]) => `<tr><td>${alias}</td><td><code>${acc.address}</code></td><td><code class="text-danger">${acc.private_key}</code></td><td><button class="btn btn-sm btn-outline-danger" onclick="deleteUserAccount('${username}', '${alias}')"><i class="bi bi-trash"></i></button></td></tr>`).join('')}</tbody></table></div>`
+                    : '<p class="text-muted">暂无账户</p>';
+
+                document.getElementById('userRpcsContent').innerHTML = Object.keys(user.rpcs).length > 0
+                    ? `<div class="table-responsive"><table class="table table-sm"><thead><tr><th>Chain ID</th><th>别名</th><th>RPC URL</th><th>操作</th></tr></thead><tbody>${Object.entries(user.rpcs).map(([chainId, rpc]) => `<tr><td>${chainId}</td><td>${rpc.alias || chainId}</td><td><code class="text-muted" style="font-size: 11px;">${rpc.rpc_url}</code></td><td><button class="btn btn-sm btn-outline-danger" onclick="deleteUserRpc('${username}', '${chainId}')"><i class="bi bi-trash"></i></button></td></tr>`).join('')}</tbody></table></div>`
+                    : '<p class="text-muted">暂无 RPC 配置</p>';
+
+                document.getElementById('userHistoryContent').innerHTML = user.history.length > 0
+                    ? `<div class="json-viewer">${JSON.stringify(user.history, null, 2)}</div>`
+                    : '<p class="text-muted">暂无调用历史</p>';
+
+                const modal = new bootstrap.Modal(document.getElementById('userDetailModal'));
+                modal.show();
+            }
+        }
+
+        async function disableUser(username) {
+            if (!confirm(`确定要禁用用户 ${username} 吗？`)) return;
+            const result = await apiCall(ADMIN_API + `/admin/users/${username}/disable`, { method: 'POST' });
+            if (result.status === 'success') {
+                loadUsers();
+                loadStats();
+            } else {
+                alert(result.message);
+            }
+        }
+
+        async function enableUser(username) {
+            const result = await apiCall(ADMIN_API + `/admin/users/${username}/enable`, { method: 'POST' });
+            if (result.status === 'success') {
+                loadUsers();
+                loadStats();
+            } else {
+                alert(result.message);
+            }
+        }
+
+        function showResetPassword(username) {
+            document.getElementById('resetPasswordUsername').value = username;
+            document.getElementById('newPassword').value = '';
+            const modal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
+            modal.show();
+        }
+
+        async function confirmResetPassword() {
+            const username = document.getElementById('resetPasswordUsername').value;
+            const newPassword = document.getElementById('newPassword').value;
+
+            if (!newPassword) {
+                alert('请输入新密码');
+                return;
+            }
+
+            const result = await apiCall(ADMIN_API + `/admin/users/${username}/reset_password`, {
+                method: 'POST',
+                body: JSON.stringify({ new_password: newPassword })
+            });
+
+            if (result.status === 'success') {
+                alert('密码重置成功');
+                bootstrap.Modal.getInstance(document.getElementById('resetPasswordModal')).hide();
+            } else {
+                alert(result.message);
+            }
+        }
+
+        function showAddRpcModal() {
+            document.getElementById('addRpcUsername').value = currentModalUsername;
+            document.getElementById('addRpcChainId').value = '';
+            document.getElementById('addRpcUrl').value = '';
+            document.getElementById('addRpcAlias').value = '';
+            const modal = new bootstrap.Modal(document.getElementById('addRpcModal'));
+            modal.show();
+        }
+
+        async function confirmAddRpc() {
+            const username = document.getElementById('addRpcUsername').value;
+            const chainId = document.getElementById('addRpcChainId').value;
+            const rpcUrl = document.getElementById('addRpcUrl').value;
+            const alias = document.getElementById('addRpcAlias').value;
+
+            if (!chainId || !rpcUrl) {
+                alert('请填写 Chain ID 和 RPC URL');
+                return;
+            }
+
+            const result = await apiCall(ADMIN_API + `/admin/users/${username}/rpcs`, {
+                method: 'POST',
+                body: JSON.stringify({ chain_id: chainId, rpc_url: rpcUrl, alias: alias })
+            });
+
+            if (result.status === 'success') {
+                bootstrap.Modal.getInstance(document.getElementById('addRpcModal')).hide();
+                viewUser(username);
+            } else {
+                alert(result.message);
+            }
+        }
+
+        async function deleteUserRpc(username, chainId) {
+            if (!confirm(`确定要删除 RPC ${chainId} 吗？`)) return;
+            const result = await apiCall(ADMIN_API + `/admin/users/${username}/rpcs/${chainId}`, { method: 'DELETE' });
+            if (result.status === 'success') {
+                viewUser(username);
+            } else {
+                alert(result.message);
+            }
+        }
+
+        async function deleteUserAccount(username, alias) {
+            if (!confirm(`确定要删除账户 ${alias} 吗？`)) return;
+            const result = await apiCall(ADMIN_API + `/admin/users/${username}/accounts/${alias}`, { method: 'DELETE' });
+            if (result.status === 'success') {
+                viewUser(username);
+            } else {
+                alert(result.message);
+            }
+        }
+
+        checkAuth();
+    </script>
+</body>
+</html>

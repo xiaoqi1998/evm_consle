@@ -1,0 +1,699 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="security_title">安全机制与开源代码 - EVM API 控制面板</title>
+    <meta name="description" data-i18n="security_desc" content="EVM API 控制面板安全机制说明和开源代码展示，包括私钥加密、Shamir's Secret Sharing 分片技术等核心代码。">
+    <meta name="keywords" data-i18n="security_keywords" content="安全机制, 开源代码, 私钥加密, Shamir's Secret Sharing, EVM API">
+    <link rel="icon" href="/static/EVM.png" type="image/png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-light: #f9fafb;
+            --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body { 
+            background-color: var(--bg-light); 
+            font-family: 'Inter', -apple-system, sans-serif;
+            color: #1f2937;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 0.75rem 0;
+        }
+
+        .card { 
+            border: none; 
+            border-radius: 12px; 
+            box-shadow: var(--card-shadow); 
+            transition: var(--transition);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+        }
+
+        .card-header {
+            font-weight: 600;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            padding: 1rem 1.25rem;
+        }
+
+        .btn {
+            border-radius: 8px;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            transition: var(--transition);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            border-color: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        pre { 
+            background: #1e293b; 
+            color: #e2e8f0;
+            padding: 1.25rem; 
+            border-radius: 8px; 
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            line-height: 1.6;
+            overflow-x: auto;
+        }
+
+        .security-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .badge-secure { background: linear-gradient(135deg, #10b981, #059669); color: white; }
+        .badge-open { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; }
+        .badge-shamir { background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; }
+
+        .toc {
+            position: sticky;
+            top: 1.5rem;
+            max-height: calc(100vh - 5rem);
+            overflow-y: auto;
+        }
+
+        .toc-link {
+            color: #6b7280;
+            text-decoration: none;
+            transition: var(--transition);
+            display: block;
+            padding: 0.25rem 0;
+        }
+
+        .toc-link:hover {
+            color: var(--primary-color);
+            transform: translateX(4px);
+        }
+
+        .toc-link.active {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .code-section {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .security-feature {
+            border-left: 4px solid var(--primary-color);
+            background: #f8fafc;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .security-icon {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <img src="/static/EVM.png" width="30" height="30" class="me-2" onerror="this.style.display='none'">
+                <span data-i18n="nav_title">EVM API 控制面板</span>
+            </a>
+            <div class="d-flex align-items-center">
+                <a href="/" class="btn btn-sm btn-outline-light me-2" data-i18n="back_home"><i class="bi bi-house me-1"></i> 返回首页</a>
+                <a href="/usage" class="btn btn-sm btn-outline-light me-2" data-i18n="usage_guide"><i class="bi bi-book me-1"></i> 使用说明</a>
+                <button class="btn btn-sm btn-outline-light" onclick="toggleLanguage()" id="lang-btn" data-i18n="lang_btn">English</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <!-- 左侧目录 -->
+            <div class="col-lg-3">
+                <div class="card shadow-sm border-0 toc">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3" data-i18n="toc_title"><i class="bi bi-list me-2"></i>目录</h5>
+                        <ul class="list-unstyled">
+                            <li><a href="#overview" class="toc-link" data-i18n="overview">安全机制概述</a></li>
+                            <li><a href="#shamir" class="toc-link" data-i18n="shamir">Shamir's Secret Sharing</a></li>
+                            <li><a href="#encryption" class="toc-link" data-i18n="encryption">AES-256-GCM 加密</a></li>
+                            <li><a href="#secure-storage" class="toc-link" data-i18n="secure_storage">SecureStorage 模块</a></li>
+                            <li><a href="#source-code" class="toc-link" data-i18n="source_code">开源代码展示</a></li>
+                            <li><a href="#security-features" class="toc-link" data-i18n="security_features">核心安全特性</a></li>
+                            <li><a href="#faq" class="toc-link" data-i18n="faq">常见问题</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧内容 -->
+            <div class="col-lg-9">
+                <!-- 安全机制概述 -->
+                <div id="overview" class="card mb-4 section">
+                    <div class="card-header bg-primary text-white">
+                        <i class="bi bi-shield-check me-2"></i><span data-i18n="security_overview">安全机制概述</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-4" data-i18n="security_overview_desc">本工具高度重视用户资产安全，采用业界领先的加密技术和分片存储方案，确保您的私钥永远不会以明文形式暴露。</p>
+                        
+                        <div class="d-flex gap-3 mb-4">
+                            <div class="flex-shrink-0">
+                                <div class="security-badge badge-secure">
+                                    <i class="bi bi-lock me-1"></i><span data-i18n="end_to_end">端到端加密</span>
+                                </div>
+                            </div>
+                            <div class="flex-shrink-0">
+                                <div class="security-badge badge-open">
+                                    <i class="bi bi-code me-1"></i><span data-i18n="fully_open">完全开源</span>
+                                </div>
+                            </div>
+                            <div class="flex-shrink-0">
+                                <div class="security-badge badge-shamir">
+                                    <i class="bi bi-shuffle me-1"></i><span data-i18n="key_sharding">私钥分片</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="security-feature">
+                            <h6 class="fw-bold mb-3" data-i18n="why_secure_title"><i class="bi bi-info-circle me-2"></i>为什么输入私钥是安全的？</h6>
+                            <div class="mb-3">
+                                <p><strong data-i18n="security_point_1_title">1. 私钥 never 离开您的浏览器</strong></p>
+                                <p class="small text-muted" data-i18n="security_point_1_desc">所有加密操作都在您的本地浏览器中完成，私钥 never 以明文形式发送到服务器。</p>
+                            </div>
+                            <div class="mb-3">
+                                <p><strong data-i18n="security_point_2_title">2. Shamir's Secret Sharing 分片技术</strong></p>
+                                <p class="small text-muted" data-i18n="security_point_2_desc">私钥被分割成多个片段，分别存储在浏览器本地和服务器。即使攻击者同时获取两端数据，也无法还原原始私钥。</p>
+                            </div>
+                            <div class="mb-3">
+                                <p><strong data-i18n="security_point_3_title">3. AES-256-GCM 强加密</strong></p>
+                                <p class="small text-muted" data-i18n="security_point_3_desc">浏览器端使用 AES-256-GCM 算法加密私钥片段，密钥由您的密码通过 PBKDF2 派生，强度极高。</p>
+                            </div>
+                            <div>
+                                <p><strong data-i18n="security_point_4_title">4. 服务器无法还原私钥</strong></p>
+                                <p class="small text-muted" data-i18n="security_point_4_desc">服务器仅存储加密后的片段，且缺少浏览器端的加密密钥，因此无法还原原始私钥。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Shamir's Secret Sharing -->
+                <div id="shamir" class="card mb-4 section">
+                    <div class="card-header bg-success text-white">
+                        <i class="bi bi-shuffle me-2"></i><span data-i18n="shamir_title">Shamir's Secret Sharing 分片算法</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-3" data-i18n="shamir_desc">Shamir's Secret Sharing 是一种密码学算法，可以将一个秘密（如私钥）分割成多个片段，只有达到一定数量的片段才能还原原始秘密。</p>
+                        
+                        <div class="alert alert-info" role="alert">
+                            <i class="bi bi-lightbulb me-2"></i>
+                            <strong data-i18n="how_it_works">工作原理：</strong>
+                            <ul class="mb-0">
+                                <li data-i18n="shamir_point_1">将私钥分割成 <strong>N</strong> 个片段</li>
+                                <li data-i18n="shamir_point_2">设置阈值 <strong>K</strong>（K ≤ N）</li>
+                                <li data-i18n="shamir_point_3">需要至少 <strong>K</strong> 个片段才能还原私钥</li>
+                                <li data-i18n="shamir_point_4">少于 <strong>K</strong> 个片段无法获取任何信息</li>
+                            </ul>
+                        </div>
+
+                        <h6 class="fw-bold mb-3" data-i18n="storage_strategy">分片存储策略：</h6>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-header bg-success text-white">
+                                        <i class="bi bi-browser me-2"></i><span data-i18n="browser_side">浏览器端</span>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="small mb-2"><strong data-i18n="storage_content">存储内容：</strong><span data-i18n="browser_storage_content">加密后的私钥片段</span></p>
+                                        <p class="small mb-2"><strong data-i18n="encrypt_key">加密密钥：</strong><span data-i18n="browser_encrypt_key">由您的密码派生（PBKDF2）</span></p>
+                                        <p class="small mb-0"><strong data-i18n="security">安全性：</strong><span data-i18n="browser_security">只有您知道密码，密钥无法被破解</span></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-header bg-warning text-dark">
+                                        <i class="bi bi-server me-2"></i><span data-i18n="server_side">服务器端</span>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="small mb-2"><strong data-i18n="storage_content">存储内容：</strong><span data-i18n="server_storage_content">未加密的私钥片段</span></p>
+                                        <p class="small mb-2"><strong data-i18n="key">密钥：</strong><span data-i18n="server_key">无</span></p>
+                                        <p class="small mb-0"><strong data-i18n="security">安全性：</strong><span data-i18n="server_security">单独的片段无法还原私钥</span></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h6 class="fw-bold mb-3" data-i18n="practical_example">实际应用示例：</h6>
+                        <pre><code class="language-javascript">// 将私钥分割成 3 个片段，需要至少 2 个片段才能还原
+const privateKey = "0x1234567890abcdef..."; // 256 位私钥
+const shares = Shamir.share(privateKey, 3, 2);
+// shares = ["1-abc...", "2-def...", "3-ghi..."]
+
+// 存储策略：
+// - 片段 1: 加密后存储在浏览器 localStorage
+// - 片段 2: 以明文形式存储在服务器数据库
+// - 片段 3: 可选存储在其他位置（如用户自己保管）
+
+// 还原私钥（需要至少 2 个片段）
+const combined = Shamir.combine(["1-abc...", "2-def..."]);
+// combined = "0x1234567890abcdef..."</code></pre>
+                    </div>
+                </div>
+
+                <!-- AES-256-GCM 加密 -->
+                <div id="encryption" class="card mb-4 section">
+                    <div class="card-header bg-info text-white">
+                        <i class="bi bi-lock me-2"></i><span data-i18n="encryption_title">AES-256-GCM 加密算法</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-3" data-i18n="encryption_desc">AES-256-GCM 是一种先进的对称加密算法，提供机密性、完整性和认证性保护。</p>
+                        
+                        <div class="row g-4 mb-4">
+                            <div class="col-md-4">
+                                <div class="text-center">
+                                    <i class="bi bi-key security-icon"></i>
+                                    <h6 class="fw-bold" data-i18n="key_256">256 位密钥</h6>
+                                    <p class="small" data-i18n="key_256_desc">2^256 种可能，暴力破解需要宇宙年龄的时间</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-center">
+                                    <i class="bi bi-shield-check security-icon"></i>
+                                    <h6 class="fw-bold" data-i18n="gcm_mode">GCM 模式</h6>
+                                    <p class="small" data-i18n="gcm_mode_desc">提供认证加密，防止密文被篡改</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-center">
+                                    <i class="bi bi-shuffle security-icon"></i>
+                                    <h6 class="fw-bold" data-i18n="random_iv">随机 IV</h6>
+                                    <p class="small" data-i18n="random_iv_desc">每次加密使用不同的初始化向量</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h6 class="fw-bold mb-3" data-i18n="key_derivation">密钥派生（PBKDF2）：</h6>
+                        <p class="mb-3" data-i18n="key_derivation_desc">您的登录密码通过 PBKDF2 算法派生出 AES 加密密钥，包含以下安全特性：</p>
+                        
+                        <ul class="list-unstyled mb-4">
+                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i><strong data-i18n="iterations_600k">600,000 次迭代</strong><span data-i18n="iterations_600k_desc">：增加暴力破解成本</span></li>
+                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i><strong data-i18n="salt_value">Salt 值</strong><span data-i18n="salt_value_desc">：防止彩虹表攻击</span></li>
+                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i><strong data-i18n="sha256_hash">SHA-256 哈希</strong><span data-i18n="sha256_hash_desc">：确保密钥强度</span></li>
+                        </ul>
+
+                        <pre><code class="language-javascript">// 密钥派生过程
+async function deriveKey(password, salt) {
+    const encoder = new TextEncoder();
+    const baseKey = await window.crypto.subtle.importKey(
+        "raw", 
+        encoder.encode(password), 
+        "PBKDF2", 
+        false, 
+        ["deriveKey"]
+    );
+    
+    return window.crypto.subtle.deriveKey(
+        { 
+            name: "PBKDF2", 
+            salt: encoder.encode(salt),  // 使用账户别名作为 salt
+            iterations: 600000,          // 60 万次迭代
+            hash: "SHA-256"              // SHA-256 哈希
+        },
+        baseKey,
+        { name: "AES-GCM", length: 256 },  // 256 位 AES 密钥
+        false,
+        ["encrypt", "decrypt"]
+    );
+}</code></pre>
+                    </div>
+                </div>
+
+                <!-- SecureStorage 模块 -->
+                <div id="secure-storage" class="card mb-4 section">
+                    <div class="card-header bg-warning text-dark">
+                        <i class="bi bi-database me-2"></i><span data-i18n="secure_storage_title">SecureStorage 模块源码</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-3" data-i18n="secure_storage_desc">以下是从 <code>crypto-utils.js</code> 中提取的 SecureStorage 核心代码，展示了私钥的加密存储过程：</p>
+                        
+                        <div class="code-section">
+                            <h6 class="fw-bold mb-3" data-i18n="encrypt_storage"><i class="bi bi-code-square me-2"></i>1. 私钥加密存储（saveEncryptedSlice）</h6>
+                            <pre><code class="language-javascript">// 使用 PBKDF2 算法从密码派生出强密钥
+async deriveKey(password, salt) {
+    const encoder = new TextEncoder();
+    const baseKey = await window.crypto.subtle.importKey(
+        "raw", 
+        encoder.encode(password), 
+        "PBKDF2", 
+        false, 
+        ["deriveKey"]
+    );
+    
+    return window.crypto.subtle.deriveKey(
+        { 
+            name: "PBKDF2", 
+            salt: encoder.encode(salt), 
+            iterations: 600000, 
+            hash: "SHA-256" 
+        },
+        baseKey,
+        { name: "AES-GCM", length: 256 },
+        false,
+        ["encrypt", "decrypt"]
+    );
+}
+
+// 加密分片并存入 localStorage
+async saveEncryptedSlice(alias, sliceB, password) {
+    try {
+        const iv = window.crypto.getRandomValues(new Uint8Array(12));
+        const key = await this.deriveKey(password, alias); // 别名作为盐值
+        
+        const encrypted = await window.crypto.subtle.encrypt(
+            { name: "AES-GCM", iv },
+            key,
+            new TextEncoder().encode(sliceB)
+        );
+        
+        // 将 IV 和密文拼接存储
+        const result = {
+            iv: Array.from(iv),
+            data: Array.from(new Uint8Array(encrypted))
+        };
+        
+        localStorage.setItem(<span class="text-danger">`account_${alias}_sliceB_enc`</span>, JSON.stringify(result));
+        
+        // 加密成功后自动缓存 Session Key（30分钟）
+        this._setSessionKey(alias, key);
+        
+        return true;
+    } catch (error) {
+        console.error('加密分片失败:', error);
+        throw new Error('加密分片失败：' + error.message);
+    }
+}</code></pre>
+                        </div>
+
+                        <div class="code-section">
+                            <h6 class="fw-bold mb-3" data-i18n="decrypt_storage"><i class="bi bi-key me-2"></i>2. 私钥解密读取（getDecryptedSlice）</h6>
+                            <pre><code class="language-javascript">// 解密本地分片（核心逻辑修改：支持 Session 缓存）
+async getDecryptedSlice(alias, password = null) {
+    try {
+        const stored = localStorage.getItem(<span class="text-danger">`account_${alias}_sliceB_enc`</span>);
+        if (!stored) {
+            throw new Error("未找到加密分片，请确认是否清除了浏览器缓存");
+        }
+        
+        const parsed = JSON.parse(stored);
+
+        // 1. 先尝试从 Session 缓存获取 Key（30分钟有效）
+        let key = this._getSessionKey(alias);
+
+        // 2. 如果没有缓存的 Key 且用户没传密码，抛出 SESSION_EXPIRED 错误
+        if (!key) {
+            if (!password) {
+                throw new Error("SESSION_EXPIRED");
+            }
+            // 使用传入的密码派生 Key
+            key = await this.deriveKey(password, alias);
+            // 缓存 Key
+            this._setSessionKey(alias, key);
+        }
+
+        const decrypted = await window.crypto.subtle.decrypt(
+            { name: "AES-GCM", iv: new Uint8Array(parsed.iv) },
+            key,
+            new Uint8Array(parsed.data)
+        );
+        
+        return new TextDecoder().decode(decrypted);
+    } catch (error) {
+        // 如果解密失败（可能是密码错误、Session 被劫持或数据损坏）
+        if (error.name === 'CryptoError' || error.name === 'InvalidCharacterError') {
+            this._clearSession();
+            throw new Error('密码错误或分片损坏');
+        }
+        // 如果是其他错误（如 SESSION_EXPIRED），直接抛出
+        throw error;
+    }
+}</code></pre>
+                        </div>
+
+                        <div class="code-section">
+                            <h6 class="fw-bold mb-3" data-i18n="session_cache"><i class="bi bi-shield-lock me-2"></i>3. Session 缓存机制</h6>
+                            <pre><code class="language-javascript">const SecureStorage = {
+    // 内存缓存：不存密码，只存派生出的密钥对象和过期时间
+    _session: {
+        key: null,
+        expiresAt: 0,
+        alias: null
+    },
+
+    // 内部方法：获取有效的 Session Key
+    _getSessionKey(alias) {
+        const now = Date.now();
+        if (this._session.key && this._session.alias === alias && now < this._session.expiresAt) {
+            return this._session.key;
+        }
+        return null;
+    },
+
+    // 内部方法：设置 Session Key（30 分钟有效期）
+    _setSessionKey(alias, key) {
+        this._session = {
+            key: key,
+            alias: alias,
+            expiresAt: Date.now() + (30 * 60 * 1000) // 30 分钟
+        };
+        console.log(`[SecureStorage] Session 已设置，有效期至：${new Date(this._session.expiresAt).toLocaleTimeString()}`);
+    },
+
+    // 内部方法：清除 Session
+    _clearSession() {
+        this._session = {
+            key: null,
+            expiresAt: 0,
+            alias: null
+        };
+        console.log('[SecureStorage] Session 已清除');
+    },
+
+    // 手动清除 Session（用于用户主动锁定）
+    clearSession() {
+        this._clearSession();
+    },
+
+    // 检查 Session 是否有效
+    isSessionValid(alias) {
+        const now = Date.now();
+        return this._session.key && this._session.alias === alias && now < this._session.expiresAt;
+    }
+};</code></pre>
+                        </div>
+
+                        <div class="alert alert-info" role="alert">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong data-i18n="key_security_features">关键安全特性：</strong>
+                            <ul class="mb-0">
+                                <li data-i18n="key_security_1"><strong data-i18n="key_security_1_title">密码 never 存储</strong><span data-i18n="key_security_1_desc">：密码仅用于派生密钥，不保存在任何地方</span></li>
+                                <li data-i18n="key_security_2"><strong data-i18n="key_security_2_title">Session 自动过期</strong><span data-i18n="key_security_2_desc">：30 分钟后需要重新输入密码</span></li>
+                                <li data-i18n="key_security_3"><strong data-i18n="key_security_3_title">手动锁定功能</strong><span data-i18n="key_security_3_desc">：用户可以主动清除 Session</span></li>
+                                <li data-i18n="key_security_4"><strong data-i18n="key_security_4_title">错误处理机制</strong><span data-i18n="key_security_4_desc">：密码错误会清除 Session，防止暴力破解</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 开源代码展示 -->
+                <div id="source-code" class="card mb-4 section">
+                    <div class="card-header bg-dark text-white">
+                        <i class="bi bi-github me-2"></i><span data-i18n="source_code_title">开源代码仓库</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-4" data-i18n="source_code_desc">本工具完全开源，所有代码均可在 GitHub 上查看，确保透明度和安全性。</p>
+                        
+                        <div class="card mb-4">
+                            <div class="card-header bg-primary text-white">
+                                <i class="bi bi-code-square me-2"></i><span data-i18n="frontend_files">前端核心文件</span>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-unstyled">
+                                    <li class="mb-3">
+                                        <i class="bi bi-file-earmark-code me-2"></i>
+                                        <strong><a href="/static/js/crypto-utils.js" target="_blank" class="text-decoration-none" data-i18n="crypto_utils">crypto-utils.js</a></strong>
+                                        <p class="small text-muted mb-0" data-i18n="crypto_utils_desc">加密工具模块：包含 Shamir's Secret Sharing、AES 加密、SecureStorage</p>
+                                    </li>
+                                    <li class="mb-3">
+                                        <i class="bi bi-file-earmark-code me-2"></i>
+                                        <strong><a href="/static/index.js" target="_blank" class="text-decoration-none" data-i18n="index_js">index.js</a></strong>
+                                        <p class="small text-muted mb-0" data-i18n="index_js_desc">主应用逻辑：包含用户界面、账户管理、合约交互等</p>
+                                    </li>
+                                    <li class="mb-3">
+                                        <i class="bi bi-file-earmark-code me-2"></i>
+                                        <strong><a href="/static/js/api.js" target="_blank" class="text-decoration-none" data-i18n="api_js">api.js</a></strong>
+                                        <p class="small text-muted mb-0" data-i18n="api_js_desc">API 客户端：封装所有后端 API 调用</p>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header bg-success text-white">
+                                <i class="bi bi-server me-2"></i><span data-i18n="backend_files">后端核心文件</span>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-unstyled">
+                                    <li class="mb-3">
+                                        <i class="bi bi-file-earmark-code me-2"></i>
+                                        <strong><a href="/config_bp.py" target="_blank" class="text-decoration-none" data-i18n="config_bp">config_bp.py</a></strong>
+                                        <p class="small text-muted mb-0" data-i18n="config_bp_desc">配置管理路由：包含账户、RPC、ABI 的增删改查</p>
+                                    </li>
+                                    <li class="mb-3">
+                                        <i class="bi bi-file-earmark-code me-2"></i>
+                                        <strong><a href="/app.py" target="_blank" class="text-decoration-none" data-i18n="app_py">app.py</a></strong>
+                                        <p class="small text-muted mb-0" data-i18n="app_py_desc">Flask 应用主文件：包含所有路由和应用配置</p>
+                                    </li>
+                                    <li class="mb-3">
+                                        <i class="bi bi-file-earmark-code me-2"></i>
+                                        <strong><a href="/models.py" target="_blank" class="text-decoration-none" data-i18n="models_py">models.py</a></strong>
+                                        <p class="small text-muted mb-0" data-i18n="models_py_desc">数据库模型：包含 User、Account、RpcConfig 等</p>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 核心安全特性 -->
+                <div id="security-features" class="card mb-4 section">
+                    <div class="card-header bg-secondary text-white">
+                        <i class="bi bi-shield-check me-2"></i><span data-i18n="core_security_features">核心安全特性</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="p-4 border rounded">
+                                    <i class="bi bi-lock security-icon"></i>
+                                    <h6 class="fw-bold mb-2" data-i18n="feature_end_to_end">端到端加密</h6>
+                                    <p class="small text-muted" data-i18n="feature_end_to_end_desc">所有敏感数据在浏览器端加密，密钥永不离开您的设备</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-4 border rounded">
+                                    <i class="bi bi-shuffle security-icon"></i>
+                                    <h6 class="fw-bold mb-2" data-i18n="feature_sharding">私钥分片</h6>
+                                    <p class="small text-muted" data-i18n="feature_sharding_desc">采用 Shamir's Secret Sharing 技术，私钥被分割存储</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-4 border rounded">
+                                    <i class="bi bi-code security-icon"></i>
+                                    <h6 class="fw-bold mb-2" data-i18n="feature_open_source">完全开源</h6>
+                                    <p class="small text-muted" data-i18n="feature_open_source_desc">所有代码公开透明，可自行审计，无后门风险</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-4 border rounded">
+                                    <i class="bi bi-shield-lock security-icon"></i>
+                                    <h6 class="fw-bold mb-2" data-i18n="feature_auto_lock">自动锁定</h6>
+                                    <p class="small text-muted" data-i18n="feature_auto_lock_desc">Session 30 分钟自动过期，主动锁定保护隐私</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 常见问题 -->
+                <div id="faq" class="card mb-4 section">
+                    <div class="card-header bg-warning text-dark">
+                        <i class="bi bi-question-circle me-2"></i><span data-i18n="faq_title">常见问题</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <h6 class="fw-bold mb-2" data-i18n="faq_q1">Q: 我的私钥会发送到服务器吗？</h6>
+                            <p class="small" data-i18n="faq_a1">A: 不会。您的私钥永远不会发送到服务器，所有加密操作都在浏览器端完成。</p>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h6 class="fw-bold mb-2" data-i18n="faq_q2">Q: 服务器可以还原我的私钥吗？</h6>
+                            <p class="small" data-i18n="faq_a2">A: 不可以。服务器只存储加密后的分片，且缺少浏览器端的加密密钥，无法还原原始私钥。</p>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h6 class="fw-bold mb-2" data-i18n="faq_q3">Q: 我的密码会存储在服务器吗？</h6>
+                            <p class="small" data-i18n="faq_a3">A: 不会。密码仅用于在浏览器端派生加密密钥，不会以任何形式存储或传输到服务器。</p>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h6 class="fw-bold mb-2" data-i18n="faq_q4">Q: 如果我忘记密码怎么办？</h6>
+                            <p class="small" data-i18n="faq_a4">A: 非常抱歉，由于我们采用端到端加密，密码无法被找回。建议您妥善保管密码，并考虑使用密码管理器。</p>
+                        </div>
+                        
+                        <div>
+                            <h6 class="fw-bold mb-2" data-i18n="faq_q5">Q: 可以证明代码没有后门吗？</h6>
+                            <p class="small" data-i18n="faq_a5">A: 本工具完全开源，所有代码均可在 GitHub 上查看。您可以自行审查代码，或使用编译后的版本。我们承诺永远不会在代码中添加任何后门或隐藏功能。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-shamir@0.1.2/build/shamir.min.js"></script>
+    <script src="../static/index.js"></script>
+    <script>
+        // 代码高亮
+        hljs.highlightAll();
+        
+        // 平滑滚动
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+</html>

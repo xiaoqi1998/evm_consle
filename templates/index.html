@@ -1,0 +1,668 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- === 1. 核心 Meta 标签优化 (关键词增强) === -->
+    <title>EVM API 控制面板 - 专业的以太坊虚拟机 (EVM) 智能合约交互与调试工具</title>
+    <meta name="description" content="EVM API 控制面板是一个强大的 Web3 开发者工具，支持以太坊虚拟机 (EVM) 合约交互、ABI 管理、交易解码及事件日志查询。支持多链节点切换，助力高效智能合约开发。">
+    <meta name="keywords" content="EVM API, 智能合约交互，ABI 调试工具，以太坊开发，Web3 控制台，区块链工具，Ethereum, BSC, Polygon, Arbitrum">
+    <meta name="author" content="EVM API Team">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://evm.giize.com/">
+    
+    <!-- === 2. Content-Security-Policy (CSP) 安全策略 === -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self'; 
+        script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; 
+        style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; 
+        font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; 
+        connect-src 'self' http: https:; 
+        img-src 'self' data:;
+    ">
+
+    <!-- === 2. JSON-LD 结构化数据 (搜索引擎最爱的“名片”) === -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "EVM API 控制面板",
+      "alternateName": "EVM Smart Contract Interactor",
+      "description": "专业的 EVM 合约交互平台，支持多链切换、ABI 动态加载。",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "All",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    }
+    </script>
+
+    <!-- Open Graph / 社交分享优化 -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://evm.giize.com/">
+    <meta property="og:title" content="EVM API 控制面板 - 智能合约交互工具">
+    <meta property="og:description" content="强大的 EVM 合约交互平台，支持 ABI 动态加载。">
+    <meta property="og:image" content="/static/EVM.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="EVM API Dashboard - Web3 Tool">
+    <meta property="twitter:image" content="/static/EVM.png">
+
+    <link rel="icon" href="/static/EVM.png" type="image/png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-light: #f9fafb;
+            --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body { 
+            background-color: var(--bg-light); 
+            font-family: 'Inter', -apple-system, sans-serif;
+            color: #1f2937;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 0.75rem 0;
+        }
+
+        .card { 
+            border: none; 
+            border-radius: 12px; 
+            box-shadow: var(--card-shadow); 
+            transition: var(--transition);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+        }
+
+        .card-header {
+            font-weight: 600;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            padding: 1rem 1.25rem;
+        }
+
+        .nav-tabs {
+            border-bottom: 2px solid #e5e7eb;
+            gap: 0.5rem;
+        }
+
+        .nav-tabs .nav-link {
+            border: none;
+            color: #6b7280;
+            font-weight: 500;
+            padding: 0.75rem 1.25rem;
+            border-radius: 8px;
+            transition: var(--transition);
+        }
+
+        .nav-tabs .nav-link:hover {
+            background-color: #f3f4f6;
+            color: #374151;
+        }
+
+        .nav-tabs .nav-link.active {
+            background-color: white;
+            color: var(--primary-color);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .btn {
+            border-radius: 8px;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            transition: var(--transition);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            border-color: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        pre { 
+            background: #1e293b; 
+            color: #e2e8f0;
+            padding: 1.25rem; 
+            border-radius: 8px; 
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+
+        .method-item { 
+            border-radius: 8px !important;
+            margin-bottom: 4px;
+            border: 1px solid transparent !important;
+            transition: var(--transition);
+        }
+
+        .method-item:hover { 
+            background-color: #f3f4f6 !important;
+            transform: translateX(4px);
+        }
+
+        .method-item.active {
+            background-color: #eef2ff !important;
+            color: var(--primary-color) !important;
+            border-color: #c7d2fe !important;
+        }
+
+        .badge {
+            padding: 0.4em 0.6em;
+            font-weight: 500;
+        }
+
+        /* 动画效果 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .tab-pane {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        /* 加载状态 */
+        .loading-spinner {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: spinner-border .75s linear infinite;
+            vertical-align: text-bottom;
+            margin-right: 0.5rem;
+        }
+
+        /* 侧边栏列表美化 */
+        .list-group-item {
+            border-left: none;
+            border-right: none;
+            padding: 0.75rem 1.25rem;
+        }
+
+        .sidebar-section-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #9ca3af;
+            margin: 1.5rem 0 0.75rem 1.25rem;
+            font-weight: 700;
+        }
+
+        /* 历史记录折叠样式 */
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            background: #f8fafc;
+            border-radius: 4px;
+        }
+        .collapsible-content.show {
+            max-height: 500px;
+            overflow-y: auto;
+            padding: 8px;
+            margin-top: 4px;
+            border: 1px solid #e2e8f0;
+        }
+        .toggle-btn {
+            cursor: pointer;
+            color: var(--primary-color);
+            text-decoration: underline;
+            font-size: 0.75rem;
+        }
+        .navbar { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important; border-bottom: 1px solid rgba(255,255,255,0.1); padding: 0.75rem 0; }
+        .card { border: none; border-radius: 12px; box-shadow: var(--card-shadow); transition: var(--transition); margin-bottom: 1.5rem; overflow: hidden; }
+        pre { background: #1e293b; color: #e2e8f0; padding: 1.25rem; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.875rem; line-height: 1.6; }
+        .sidebar-section-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #9ca3af; margin: 1.5rem 0 0.75rem 1.25rem; font-weight: 700; }
+        
+        /* 页面底部静态 SEO 内容的样式 */
+        .seo-static-footer { background: #fff; padding: 60px 0; border-top: 1px solid #e5e7eb; margin-top: 100px; }
+    </style>
+</head>
+<body>
+    <!-- Toast 容器 -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong class="me-auto">Notification</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" id="toast-message"></div>
+        </div>
+    </div>
+
+    <!-- 登录注册模态框 -->
+    <div class="modal fade" id="authModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="authModalTitle">登录</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="auth-form">
+                        <div class="mb-3">
+                            <label class="form-label">用户名</label>
+                            <input type="text" id="auth-username" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">密码</label>
+                            <input type="password" id="auth-password" class="form-control" required>
+                        </div>
+                        <div id="auth-error" class="text-danger small mb-3" style="display: none;"></div>
+                        <button type="submit" class="btn btn-primary w-100" id="auth-submit-btn">登录</button>
+                    </form>
+                    <div class="mt-3 text-center">
+                        <a href="#" id="toggle-auth-mode" class="small">没有账号？立即注册</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <img src="/static/EVM.png" width="30" height="30" class="me-2" onerror="this.style.display='none'">
+                <span data-i18n="nav_title">EVM API 控制面板</span>
+            </a>
+            <div class="d-flex align-items-center">
+                <a href="/usage" class="btn btn-sm btn-outline-light me-2">使用说明</a>
+                <a href="/security" class="btn btn-sm btn-outline-success me-2"><i class="bi bi-shield-check me-1"></i>安全与开源</a>
+                <a href="/docs" class="btn btn-sm btn-outline-light me-2">开发文档</a>
+                <span id="user-display" class="text-light me-3 small" style="display: none;"></span>
+                <!-- Session 状态指示器 -->
+                <div class="me-3" id="session-status" style="display: none;">
+                    <span class="text-success small" id="session-status-text" title="Session 有效期内无需输入密码">
+                        <i class="bi bi-shield-lock"></i> 已解锁
+                    </span>
+                    <button class="btn btn-sm btn-outline-light ms-2" onclick="lockSession()" title="锁定 Session，下次操作需重新输入密码">
+                        <i class="bi bi-lock"></i>
+                    </button>
+                </div>
+                <div class="me-3" id="metamask-nav-status" style="display: none;">
+                    <span class="text-warning small" id="metamask-nav-account"></span>
+                    <button class="btn btn-sm btn-outline-danger ms-2" onclick="disconnectMetamask()" id="nav-disconnect-metamask-btn">
+                        <i class="bi bi-x-circle me-1"></i> 断开
+                    </button>
+                </div>
+                <button class="btn btn-sm btn-outline-warning me-2" onclick="connectMetamask()" id="nav-connect-metamask-btn" style="display: none;">
+                    <i class="bi bi-wallet2 me-1"></i> 连接 MetaMask
+                </button>
+                <button class="btn btn-sm btn-outline-danger me-2" onclick="logout()" id="logout-btn" style="display: none;">退出</button>
+                <button class="btn btn-sm btn-outline-light" onclick="toggleLanguage()" id="lang-btn">English</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <!-- 侧边栏 -->
+            <div class="col-lg-3">
+                <div class="card shadow-sm border-0 sticky-top" style="top: 1.5rem; max-height: calc(100vh - 5rem); overflow-y: auto;">
+                    <div class="card-body p-0">
+                        <div class="sidebar-section-title" data-i18n="account_config">账户配置</div>
+                        <ul id="account-list" class="list-group list-group-flush mb-2"></ul>
+                        <div class="px-3 mb-3">
+                            <button class="btn btn-outline-primary btn-sm w-100" data-bs-toggle="modal" data-bs-target="#configModal" onclick="showConfigTab('account')">
+                                <i class="bi bi-plus-lg me-1"></i> <span data-i18n="btn_add_config">添加配置</span>
+                            </button>
+                        </div>
+
+                        <div class="sidebar-section-title" data-i18n="rpc_alias">链/RPC 节点</div>
+                        <ul id="rpc-list" class="list-group list-group-flush mb-2"></ul>
+                        <div class="px-3 mb-3">
+                            <button class="btn btn-outline-primary btn-sm w-100" data-bs-toggle="modal" data-bs-target="#configModal" onclick="showConfigTab('rpc')">
+                                <i class="bi bi-plus-lg me-1"></i> <span data-i18n="btn_add_config">添加配置</span>
+                            </button>
+                        </div>
+
+                        <div class="sidebar-section-title" data-i18n="abi_mgmt">ABI 管理</div>
+                        <ul id="abi-list" class="list-group list-group-flush mb-2"></ul>
+                        <div class="px-3 mb-3">
+                            <button class="btn btn-outline-success btn-sm w-100" data-bs-toggle="modal" data-bs-target="#uploadAbiModal">
+                                <i class="bi bi-cloud-upload me-1"></i> <span data-i18n="btn_upload_abi">上传 ABI</span>
+                            </button>
+                        </div>
+
+
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- 主内容区 -->
+            <div class="col-lg-9">
+                <ul class="nav nav-tabs" id="mainTabs" role="tablist">
+                    <li class="nav-item">
+                        <button class="nav-link active" id="interact-tab" data-bs-toggle="tab" data-bs-target="#interact" type="button" data-i18n="tab_interact">合约交互</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" id="tools-tab" data-bs-toggle="tab" data-bs-target="#tools" type="button" data-i18n="tab_tools">辅助工具</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" id="events-tab" data-bs-toggle="tab" data-bs-target="#events" type="button" data-i18n="tab_events">事件日志</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button" data-i18n="history_title">调用历史记录</button>
+                    </li>
+                </ul>
+
+                <div class="tab-content">
+                    <!-- 合约交互 -->
+                    <div class="tab-pane fade show active" id="interact">
+                        <div class="card">
+                            <div class="card-header bg-primary text-white" data-i18n="tab_interact">合约交互</div>
+                            <div class="card-body">
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label" data-i18n="contract_addr">合约地址</label>
+                                        <input type="text" id="contract-address" class="form-control" placeholder="0x...">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">ABI</label>
+                                        <select id="select-abi" class="form-select"></select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label" data-i18n="chain_rpc">链/RPC</label>
+                                        <select id="select-chain" class="form-select"></select>
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary w-100 mb-3" id="btn-load-methods" data-i18n="btn_load_methods">加载方法</button>
+
+                                <div id="methods-container" style="display: none;" class="row">
+                                    <div class="col-md-4">
+                                        <h6 data-i18n="method_list">方法列表:</h6>
+                                        <div id="methods-list" class="list-group overflow-auto" style="max-height: 400px;"></div>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <div id="method-execution-area" style="display: none;">
+                                            <h6 id="selected-method-name">Method: -</h6>
+                                            <div id="method-inputs" class="mb-3"></div>
+                                            <div id="write-options" style="display: none;" class="mb-3 p-3 border rounded bg-light">
+                                                <h6 data-i18n="send_options">发送选项 (Write Only):</h6>
+                                                <div class="row g-2">
+                                                    <div class="col-md-6">
+                                                        <label class="form-label small" data-i18n="account_alias">账户别名</label>
+                                                        <select id="select-account" class="form-select form-select-sm"></select>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label class="form-label small">Value (wei)</label>
+                                                        <input type="number" id="input-value" class="form-control form-control-sm" value="0">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <button class="btn btn-success w-100" id="btn-execute" data-i18n="btn_execute">执行方法</button>
+                                            <hr>
+                                            <h6 data-i18n="exec_result">执行结果:</h6>
+                                            <pre id="execution-result" data-i18n="waiting">等待执行...</pre>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 辅助工具 -->
+                    <div class="tab-pane fade" id="tools">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header bg-secondary text-white" data-i18n="tool_receipt">获取交易回执</div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label class="form-label" data-i18n="tx_hash">交易哈希</label>
+                                            <input type="text" id="tool-tx-hash" class="form-control" placeholder="0x...">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label" data-i18n="chain_rpc">链/RPC</label>
+                                            <select id="tool-chain-select" class="form-select"></select>
+                                        </div>
+                                        <button class="btn btn-secondary w-100" id="btn-get-receipt" data-i18n="btn_query_receipt">查询回执</button>
+                                        <hr>
+                                        <pre id="tool-receipt-result" class="small" data-i18n="result_here">结果将在此显示...</pre>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header bg-info text-white" data-i18n="tool_decode">解码交易数据</div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label class="form-label" data-i18n="encoded_data">编码数据 (Input Data)</label>
+                                            <textarea id="tool-decode-data" class="form-control" rows="3" placeholder="0x..."></textarea>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label" data-i18n="related_abi">对应 ABI</label>
+                                            <select id="tool-decode-abi" class="form-select"></select>
+                                        </div>
+                                        <button class="btn btn-info w-100 text-white" id="btn-decode-tx" data-i18n="btn_decode">解码数据</button>
+                                        <hr>
+                                        <pre id="tool-decode-result" class="small" data-i18n="result_here">结果将在此显示...</pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 事件日志 -->
+                    <div class="tab-pane fade" id="events">
+                        <div class="card">
+                            <div class="card-header bg-dark text-white" data-i18n="tab_events">查询合约事件</div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label" data-i18n="contract_addr">合约地址</label>
+                                        <input type="text" id="event-contract-address" class="form-control" placeholder="0x...">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">ABI</label>
+                                        <select id="event-select-abi" class="form-select"></select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label" data-i18n="chain_rpc">链/RPC</label>
+                                        <select id="event-select-chain" class="form-select"></select>
+                                    </div>
+                                </div>
+                                <div class="row g-3 mt-2">
+                                    <div class="col-md-3">
+                                        <label class="form-label" data-i18n="event_name">事件名称</label>
+                                        <input type="text" id="event-name" class="form-control" placeholder="Transfer">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label" data-i18n="from_block">起始区块</label>
+                                        <input type="number" id="event-from-block" class="form-control" value="0">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label" data-i18n="to_block">结束区块</label>
+                                        <input type="text" id="event-to-block" class="form-control" value="latest">
+                                    </div>
+                                    <div class="col-md-5">
+                                        <label class="form-label" data-i18n="param_filter">参数过滤 (JSON)</label>
+                                        <input type="text" id="event-filters" class="form-control" placeholder='{"from": "0x..."}'>
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary mt-3 w-100" id="btn-get-events" data-i18n="btn_query_events">查询事件</button>
+                                <hr>
+                                <h6 data-i18n="exec_result">查询结果:</h6>
+                                <pre id="event-result" data-i18n="waiting">等待查询...</pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 调用历史记录 -->
+                    <div class="tab-pane fade" id="history">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-header bg-white d-flex justify-content-between align-items-center border-bottom">
+                                <h5 class="mb-0 fw-bold" data-i18n="history_title">调用历史记录</h5>
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="refreshHistory()" data-i18n="btn_refresh_history">刷新</button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="clearCallHistory()" data-i18n="btn_clear_history">清空</button>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive" style="max-height: 600px;">
+                                    <table class="table table-hover history-table mb-0">
+                                        <thead class="table-light sticky-top">
+                                            <tr>
+                                                <th data-i18n="time" style="width: 150px;">时间</th>
+                                                <th data-i18n="type" style="width: 80px;">类型</th>
+                                                <th data-i18n="method">方法/合约</th>
+                                                <th data-i18n="params">参数</th>
+                                                <th data-i18n="result">结果/错误</th>
+                                                <th data-i18n="actions" style="width: 100px;">操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="history-list">
+                                            <!-- 历史记录将通过 JS 渲染 -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- 配置 Modal -->
+    <div class="modal fade" id="configModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" data-i18n="btn_add_config">添加配置</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <ul class="nav nav-pills mb-3" role="tablist">
+                        <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#pill-acc" data-i18n="pill_acc">账户</button></li>
+                        <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#pill-rpc" data-i18n="pill_rpc">RPC</button></li>
+                    </ul>
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="pill-acc">
+                            <div class="mb-3"><label class="form-label" data-i18n="alias">别名</label><input type="text" id="cfg-acc-alias" class="form-control"></div>
+                            <div class="mb-3"><label class="form-label" data-i18n="pk">私钥</label><input type="text" id="cfg-acc-pk" class="form-control"></div>
+                            <div class="mb-3"><label class="form-label" data-i18n="addr">地址</label><input type="text" id="cfg-acc-addr" class="form-control"></div>
+                            <button class="btn btn-primary w-100" onclick="saveAccountConfig()" data-i18n="btn_save_acc">保存账户</button>
+                        </div>
+                        <div class="tab-pane fade" id="pill-rpc">
+                            <div class="mb-3"><label class="form-label" data-i18n="chain_id">链 ID</label><input type="text" id="cfg-rpc-id" class="form-control" placeholder="1"></div>
+                            <div class="mb-3"><label class="form-label" data-i18n="alias">别名</label><input type="text" id="cfg-rpc-alias" class="form-control" placeholder="Ethereum Mainnet"></div>
+                            <div class="mb-3"><label class="form-label">RPC URL</label><input type="text" id="cfg-rpc-url" class="form-control" placeholder="https://mainnet.infura.io/v3/..."></div>
+                            <button class="btn btn-primary w-100" onclick="saveRpcConfig()" data-i18n="btn_save_rpc">保存 RPC</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 上传 ABI Modal -->
+    <div class="modal fade" id="uploadAbiModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" data-i18n="btn_upload_abi">上传 ABI</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label" data-i18n="abi_name">ABI 名称</label><input type="text" id="upload-abi-name" class="form-control" placeholder="Token"></div>
+                    <div class="mb-3"><label class="form-label" data-i18n="abi_content">ABI 内容 (JSON 数组)</label><textarea id="upload-abi-content" class="form-control" rows="10"></textarea></div>
+                    <button class="btn btn-primary w-100" onclick="uploadAbi()" data-i18n="btn_upload">上传</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <section class="seo-footer-compact">
+    <div class="container">
+        <!-- 第一行：品牌与核心卖点 -->
+        <div class="row align-items-center mb-3">
+            <div class="col-md-6">
+                <h2 class="h5 mb-0 d-flex align-items-center">
+                    EVM API 控制面板 
+                    <span class="evm-all-badge ms-2">ALL EVM CHAINS SUPPORT</span>
+                </h2>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <p class="small text-white">专业 Web3 调试工具：支持<strong>所有 EVM 兼容链</strong>的智能合约交互与数据解码。</p>
+            </div>
+        </div>
+
+        <hr class="border-secondary opacity-25">
+
+        <!-- 第二行：精简功能描述 -->
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="feature-item">
+                    <h5 class="small text-uppercase mb-1">ABI 动态交互</h5>
+                    <p class="x-small">解析函数/事件/错误，支持复杂参数转换，Read/Write 一键调用。</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-item">
+                    <h5 class="small text-uppercase mb-1">全链 RPC 配置</h5>
+                    <p class="x-small">自定义 RPC 与私钥别名管理，支持本地签名模式。</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-item">
+                    <h5 class="small text-uppercase mb-1">数据解码与历史</h5>
+                    <p class="x-small">Input Data 解码，事件日志过滤查询，支持调用历史 Recall 恢复。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 第三行：常用生态标签 -->
+        <div class="mt-3 pt-2 border-top border-secondary">
+            <div class="d-flex align-items-center flex-wrap">
+                <span class="ecosystem-label">常用生态:</span>
+                <span class="network-tag">Ethereum</span>
+                <span class="network-tag">BSC</span>
+                <span class="network-tag">Polygon</span>
+                <span class="network-tag">Arbitrum</span>
+                <span class="network-tag">Optimism</span>
+                <span class="network-tag">Base</span>
+                <span class="network-tag">Avalanche</span>
+                <span class="network-tag">Linea</span>
+                <span class="ms-1 text-white-50 x-small" style="font-size:0.75rem;">& 任意 EVM 链</span>
+            </div>
+        </div>
+    </div>
+</section>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.9.0/ethers.umd.min.js" type="application/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsencrypt/3.3.2/jsencrypt.min.js"></script>
+    <!-- DOMPurify - XSS 防护库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+    <!-- Shamir's Secret Sharing - 私钥分片加密库 -->
+    <script src="https://cdn.jsdelivr.net/npm/js-shamir@0.1.2/build/shamir.min.js"></script>
+    <script src="../static/index.js"></script>
+</body>
+</html>

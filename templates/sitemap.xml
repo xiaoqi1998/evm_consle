@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="https://www.sitemaps.org/schemas/sitemap/0.9">
+    <!-- 静态页面 -->
+    <url>
+        <loc>https://evm.giize.com/</loc>
+        <lastmod>{{ lastmod }}</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>1.0</priority>
+    </url>
+    <url>
+        <loc>https://evm.giize.com/usage</loc>
+        <lastmod>{{ lastmod }}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://evm.giize.com/docs</loc>
+        <lastmod>{{ lastmod }}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    
+    <!-- 认证路由 -->
+    <url>
+        <loc>https://evm.giize.com/register</loc>
+        <lastmod>{{ lastmod }}</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://evm.giize.com/login</loc>
+        <lastmod>{{ lastmod }}</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    
+    <!-- 公开API路由 -->
+    <url>
+        <loc>https://evm.giize.com/api/public_key</loc>
+        <lastmod>{{ lastmod }}</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.6</priority>
+    </url>
+</urlset>

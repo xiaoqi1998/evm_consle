@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>使用说明 - EVM API 控制面板</title>
+    <meta name="description" content="EVM API 控制面板使用说明，详细介绍如何使用智能合约交互、ABI 管理、MetaMask 连接等功能。">
+    <meta name="keywords" content="EVM API, 使用说明, 智能合约, ABI 管理, MetaMask, 区块链工具">
+    <link rel="icon" href="/static/EVM.png" type="image/png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-light: #f9fafb;
+            --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body { 
+            background-color: var(--bg-light); 
+            font-family: 'Inter', -apple-system, sans-serif;
+            color: #1f2937;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 0.75rem 0;
+        }
+
+        .card { 
+            border: none; 
+            border-radius: 12px; 
+            box-shadow: var(--card-shadow); 
+            transition: var(--transition);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+        }
+
+        .card-header {
+            font-weight: 600;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            padding: 1rem 1.25rem;
+        }
+
+        .btn {
+            border-radius: 8px;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            transition: var(--transition);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            border-color: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        pre { 
+            background: #1e293b; 
+            color: #e2e8f0;
+            padding: 1.25rem; 
+            border-radius: 8px; 
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+
+        .step-card {
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .feature-icon {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .toc {
+            position: sticky;
+            top: 1.5rem;
+            max-height: calc(100vh - 5rem);
+            overflow-y: auto;
+        }
+
+        .toc-link {
+            color: #6b7280;
+            text-decoration: none;
+            transition: var(--transition);
+            display: block;
+            padding: 0.25rem 0;
+        }
+
+        .toc-link:hover {
+            color: var(--primary-color);
+            transform: translateX(4px);
+        }
+
+        .toc-link.active {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        /* 动画效果 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section {
+            animation: fadeIn 0.3s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <img src="/static/EVM.png" width="30" height="30" class="me-2" onerror="this.style.display='none'">
+                <span data-i18n="nav_title">EVM API 控制面板</span>
+            </a>
+            <div class="d-flex align-items-center">
+                <a href="/" class="btn btn-sm btn-outline-light me-2" data-i18n="back_home">返回首页</a>
+                <button class="btn btn-sm btn-outline-light" onclick="toggleLanguage()" id="lang-btn" data-i18n="lang_btn">English</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <!-- 左侧目录 -->
+            <div class="col-lg-3">
+                <div class="card shadow-sm border-0 toc">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3" data-i18n="toc_title">目录</h5>
+                        <ul class="list-unstyled">
+                            <li><a href="#overview" class="toc-link">工具概述</a></li>
+                            <li><a href="#quick-start" class="toc-link">快速开始</a></li>
+                            <li><a href="#account-config" class="toc-link">账户配置</a></li>
+                            <li><a href="#rpc-config" class="toc-link">RPC 节点配置</a></li>
+                            <li><a href="#abi-management" class="toc-link">ABI 管理</a></li>
+                            <li><a href="#contract-interaction" class="toc-link">合约交互</a></li>
+                            <li><a href="#tools" class="toc-link">辅助工具</a></li>
+                            <li><a href="#events" class="toc-link">事件日志查询</a></li>
+                            <li><a href="#metamask" class="toc-link">MetaMask 连接</a></li>
+                            <li><a href="#history" class="toc-link">调用历史记录</a></li>
+                            <li><a href="#troubleshooting" class="toc-link">常见问题</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧内容 -->
+            <div class="col-lg-9">
+                <!-- 工具概述 -->
+                <div id="overview" class="card mb-4 section">
+                    <div class="card-header bg-primary text-white">
+                        <i class="bi bi-info-circle me-2"></i><span data-i18n="overview">工具概述</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-4" data-i18n="overview_desc">EVM API 控制面板是一个专业的 Web3 开发者工具，支持以太坊虚拟机(EVM)合约交互、ABI 管理、MetaMask 连接、交易解码及事件日志查询。支持多链节点切换，助力高效智能合约开发。</p>
+                        
+                        <h6 class="fw-bold mb-2" data-i18n="core_features">核心功能：</h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i><span data-i18n="feature_1">智能合约交互（Read/Write 方法）</span></li>
+                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i><span data-i18n="feature_2">多链 RPC 节点配置与切换</span></li>
+                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i><span data-i18n="feature_3">ABI 文件上传与管理</span></li>
+                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i><span data-i18n="feature_4">MetaMask 钱包连接</span></li>
+                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i><span data-i18n="feature_5">交易数据解码</span></li>
+                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i><span data-i18n="feature_6">合约事件日志查询</span></li>
+                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i><span data-i18n="feature_7">调用历史记录管理</span></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 快速开始 -->
+                <div id="quick-start" class="card mb-4 section">
+                    <div class="card-header bg-secondary text-white">
+                        <i class="bi bi-rocket me-2"></i><span data-i18n="quick_start">快速开始</span>
+                    </div>
+                    <div class="card-body">
+                        <h6 class="fw-bold mb-3" data-i18n="usage_steps">使用步骤：</h6>
+                        
+                        <div class="step-card bg-light p-4 mb-3 rounded">
+                            <h6 class="fw-bold" data-i18n="step_1">步骤 1：登录/注册</h6>
+                            <p data-i18n="step_1_desc">首先需要登录或注册一个账号，获取访问权限。</p>
+                        </div>
+                        
+                        <div class="step-card bg-light p-4 mb-3 rounded">
+                            <h6 class="fw-bold" data-i18n="step_2">步骤 2：配置账户</h6>
+                            <p data-i18n="step_2_desc">在左侧边栏的"账户配置"部分添加您的钱包账户，包括别名、私钥和地址。</p>
+                        </div>
+                        
+                        <div class="step-card bg-light p-4 mb-3 rounded">
+                            <h6 class="fw-bold" data-i18n="step_3">步骤 3：配置 RPC 节点</h6>
+                            <p data-i18n="step_3_desc">在"链/RPC 节点"部分添加您需要使用的区块链网络 RPC 节点。</p>
+                        </div>
+                        
+                        <div class="step-card bg-light p-4 mb-3 rounded">
+                            <h6 class="fw-bold" data-i18n="step_4">步骤 4：上传 ABI</h6>
+                            <p data-i18n="step_4_desc">在"ABI 管理"部分上传您的智能合约 ABI 文件，以便后续调用合约方法。</p>
+                        </div>
+                        
+                        <div class="step-card bg-light p-4 rounded">
+                            <h6 class="fw-bold" data-i18n="step_5">步骤 5：开始合约交互</h6>
+                            <p data-i18n="step_5_desc">在"合约交互"标签页中，输入合约地址、选择 ABI 和链/RPC，然后加载并执行合约方法。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 账户配置 -->
+                <div id="account-config" class="card mb-4 section">
+                    <div class="card-header bg-info text-white">
+                        <i class="bi bi-wallet me-2"></i><span data-i18n="account_config">账户配置</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-3" data-i18n="account_config_desc">账户配置用于存储您的钱包信息，方便在调用合约时选择使用。</p>
+                        
+                        <h6 class="fw-bold mb-2" data-i18n="add_account">添加账户：</h6>
+                        <ol class="list-decimal pl-5 mb-4">
+                            <li data-i18n="account_step_1">点击左侧边栏"账户配置"下的"添加配置"按钮</li>
+                            <li data-i18n="account_step_2">在弹出的模态框中填写：
+                                <ul class="list-disc pl-5 mt-2">
+                                    <li><strong data-i18n="account_alias">别名</strong>：<span data-i18n="account_alias_desc">账户的昵称，方便识别</span></li>
+                                    <li><strong data-i18n="account_pk">私钥</strong>：<span data-i18n="account_pk_desc">钱包的私钥（用于签名交易）</span></li>
+                                    <li><strong data-i18n="account_addr">地址</strong>：<span data-i18n="account_addr_desc">钱包的地址</span></li>
+                                </ul>
+                            </li>
+                            <li data-i18n="account_step_3">点击"保存账户"按钮</li>
+                        </ol>
+                        
+                        <div class="alert alert-info" role="alert">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong data-i18n="security_title">🔒 安全机制说明</strong>
+                            <div class="mt-2">
+                                <p class="mb-2" data-i18n="security_desc">您的私钥采用 <strong>Shamir's Secret Sharing</strong> 分片加密技术进行保护：</p>
+                                <ul class="list-disc pl-5 mb-2">
+                                    <li><strong data-i18n="security_point_1">私钥分片</strong>：<span data-i18n="security_point_1_desc">私钥被分割成多个片段，分别存储在浏览器本地和服务器</span></li>
+                                    <li><strong data-i18n="security_point_2">本地加密</strong>：<span data-i18n="security_point_2_desc">浏览器端使用 AES-256-GCM 加密私钥片段，密钥由您的密码派生</span></li>
+                                    <li><strong data-i18n="security_point_3">服务器存储</strong>：<span data-i18n="security_point_3_desc">服务器仅存储加密后的私钥片段，无法还原原始私钥</span></li>
+                                    <li><strong data-i18n="security_point_4">无需传输明文</strong>：<span data-i18n="security_point_4_desc">私钥 never 以明文形式传输或存储在服务器</span></li>
+                                </ul>
+                                <p class="mb-2" data-i18n="security_point_5_desc"><strong>因此，即使服务器被攻击，攻击者也无法获取您的私钥！</strong></p>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-warning" role="alert">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong data-i18n="security_tip">⚠️ 安全提示</strong>：<span data-i18n="security_tip_desc">请妥善保管您的登录密码，密码用于派生加密密钥。如果忘记密码，将无法解密私钥。</span>
+                        </div>
+                        
+                        <div class="alert alert-success" role="alert">
+                            <i class="bi bi-shield-check me-2"></i>
+                            <strong data-i18n="security_open_source">🛡️ 开源透明</strong>：<span data-i18n="security_open_source_desc">本工具完全开源，所有加密代码均可在 <a href="/security" class="alert-link">安全与开源页面</a> 查看，确保无后门、无隐藏逻辑。</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RPC 节点配置 -->
+                <div id="rpc-config" class="card mb-4 section">
+                    <div class="card-header bg-warning text-white">
+                        <i class="bi bi-geo-alt me-2"></i><span data-i18n="rpc_config">RPC 节点配置</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-3" data-i18n="rpc_config_desc">RPC 节点配置用于连接不同的区块链网络，支持自定义 RPC 地址。</p>
+                        
+                        <h6 class="fw-bold mb-2" data-i18n="add_rpc">添加 RPC 节点：</h6>
+                        <ol class="list-decimal pl-5 mb-4">
+                            <li data-i18n="rpc_step_1">点击左侧边栏"链/RPC 节点"下的"添加配置"按钮</li>
+                            <li data-i18n="rpc_step_2">在弹出的模态框中填写：
+                                <ul class="list-disc pl-5 mt-2">
+                                    <li><strong data-i18n="rpc_chain_id">链 ID</strong>：<span data-i18n="rpc_chain_id_desc">区块链网络的链 ID（如以太坊主网为 1）</span></li>
+                                    <li><strong data-i18n="rpc_alias">别名</strong>：<span data-i18n="rpc_alias_desc">网络的昵称，方便识别</span></li>
+                                    <li><strong data-i18n="rpc_url">RPC URL</strong>：<span data-i18n="rpc_url_desc">RPC 节点的 URL 地址</span></li>
+                                </ul>
+                            </li>
+                            <li data-i18n="rpc_step_3">点击"保存 RPC"按钮</li>
+                        </ol>
+                        
+                        <h6 class="fw-bold mb-2" data-i18n="supported_networks">支持的网络：</h6>
+                        <div class="d-flex flex-wrap gap-2 mb-4">
+                            <span class="badge bg-primary">Ethereum</span>
+                            <span class="badge bg-primary">BSC</span>
+                            <span class="badge bg-primary">Polygon</span>
+                            <span class="badge bg-primary">Arbitrum</span>
+                            <span class="badge bg-primary">Optimism</span>
+                            <span class="badge bg-primary">Base</span>
+                            <span class="badge bg-primary">Avalanche</span>
+                            <span class="badge bg-primary">Linea</span>
+                            <span class="badge bg-primary">... 任意 EVM 兼容链</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ABI 管理 -->
+                <div id="abi-management" class="card mb-4 section">
+                    <div class="card-header bg-success text-white">
+                        <i class="bi bi-file-code me-2"></i><span data-i18n="abi_management">ABI 管理</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-3" data-i18n="abi_management_desc">ABI（应用程序二进制接口）是与智能合约交互的关键，包含了合约的方法、事件等信息。</p>
+                        
+                        <h6 class="fw-bold mb-2" data-i18n="upload_abi">上传 ABI：</h6>
+                        <ol class="list-decimal pl-5 mb-4">
+                            <li data-i18n="abi_step_1">点击左侧边栏"ABI 管理"下的"上传 ABI"按钮</li>
+                            <li data-i18n="abi_step_2">在弹出的模态框中填写：
+                                <ul class="list-disc pl-5 mt-2">
+                                    <li><strong data-i18n="abi_name">ABI 名称</strong>：<span data-i18n="abi_name_desc">ABI 文件的名称，方便识别</span></li>
+                                    <li><strong data-i18n="abi_content">ABI 内容</strong>：<span data-i18n="abi_content_desc">智能合约的 ABI JSON 数组</span></li>
+                                </ul>
+                            </li>
+                            <li data-i18n="abi_step_3">点击"上传"按钮</li>
+                        </ol>
+                        
+                        <h6 class="fw-bold mb-2" data-i18n="abi_example">ABI 格式示例：</h6>
+                        <pre>[
+  {
+    "inputs": [],
+    "name": "totalSupply",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "balanceOf",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]</pre>
+                    </div>
+                </div>
+
+                <!-- 合约交互 -->
+                <div id="contract-interaction" class="card mb-4 section">
+                    <div class="card-header bg-dark text-white">
+                        <i class="bi bi-exchange me-2"></i><span data-i18n="contract_interaction">合约交互</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-3" data-i18n="contract_interaction_desc">合约交互是本工具的核心功能，支持调用智能合约的读写方法。</p>
+                        
+                        <h6 class="fw-bold mb-2" data-i18n="contract_steps">使用步骤：</h6>
+                        <ol class="list-decimal pl-5 mb-4">
+                            <li data-i18n="contract_step_1">在"合约地址"输入框中填写智能合约的地址</li>
+                            <li data-i18n="contract_step_2">从"ABI"下拉菜单中选择已上传的 ABI 文件</li>
+                            <li data-i18n="contract_step_3">从"链/RPC"下拉菜单中选择要连接的网络</li>
+                            <li data-i18n="contract_step_4">点击"加载方法"按钮，系统会解析并显示合约的所有方法</li>
+                            <li data-i18n="contract_step_5">从左侧方法列表中选择要调用的方法</li>
+                            <li data-i18n="contract_step_6">根据方法要求填写参数（如果有）</li>
+                            <li data-i18n="contract_step_7">对于写入方法（Write），选择发送账户和设置 value（如果需要）</li>
+                            <li data-i18n="contract_step_8">点击"执行方法"按钮</li>
+                            <li data-i18n="contract_step_9">查看执行结果</li>
+                        </ol>
+                        
+                        <h6 class="fw-bold mb-2" data-i18n="method_types">方法类型：</h6>
+                        <ul class="list-disc pl-5">
+                            <li><strong data-i18n="read_method">Read 方法</strong>：<span data-i18n="read_method_desc">无需签名，直接查询合约状态</span></li>
+                            <li><strong data-i18n="write_method">Write 方法</strong>：<span data-i18n="write_method_desc">需要签名交易，会改变合约状态</span></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 辅助工具 -->
+                <div id="tools" class="card mb-4 section">
+                    <div class="card-header bg-secondary text-white">
+                        <i class="bi bi-tools me-2"></i><span data-i18n="tools">辅助工具</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-3" data-i18n="tools_desc">辅助工具提供了交易回执查询和解码功能，方便开发者调试。</p>
+                        
+                        <h6 class="fw-bold mb-2" data-i18n="get_receipt">获取交易回执：</h6>
+                        <ol class="list-decimal pl-5 mb-4">
+                            <li data-i18n="receipt_step_1">在"获取交易回执"卡片中输入交易哈希</li>
+                            <li data-i18n="receipt_step_2">选择对应的链/RPC</li>
+                            <li data-i18n="receipt_step_3">点击"查询回执"按钮</li>
+                            <li data-i18n="receipt_step_4">查看交易的详细信息，包括状态、gas 使用情况等</li>
+                        </ol>
+                        
+                        <h6 class="fw-bold mb-2" data-i18n="decode_tx">解码交易数据：</h6>
+                        <ol class="list-decimal pl-5">
+                            <li data-i18n="decode_step_1">在"解码交易数据"卡片中输入编码数据（Input Data）</li>
+                            <li data-i18n="decode_step_2">选择对应的 ABI 文件</li>
+                            <li data-i18n="decode_step_3">点击"解码数据"按钮</li>
+                            <li data-i18n="decode_step_4">查看解码后的方法名和参数</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <!-- 事件日志查询 -->
+                <div id="events" class="card mb-4 section">
+                    <div class="card-header bg-info text-white">
+                        <i class="bi bi-calendar-event me-2"></i><span data-i18n="events">事件日志查询</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-3" data-i18n="events_desc">事件日志查询功能允许您查询智能合约发出的事件，方便跟踪合约活动。</p>
+                        
+                        <h6 class="fw-bold mb-2" data-i18n="events_steps">使用步骤：</h6>
+                        <ol class="list-decimal pl-5 mb-4">
+                            <li data-i18n="events_step_1">输入合约地址</li>
+                            <li data-i18n="events_step_2">选择对应的 ABI 文件</li>
+                            <li data-i18n="events_step_3">选择要连接的链/RPC</li>
+                            <li data-i18n="events_step_4">输入事件名称（如 Transfer）</li>
+                            <li data-i18n="events_step_5">设置起始区块和结束区块</li>
+                            <li data-i18n="events_step_6">（可选）输入参数过滤条件（JSON 格式）</li>
+                            <li data-i18n="events_step_7">点击"查询事件"按钮</li>
+                            <li data-i18n="events_step_8">查看事件日志列表</li>
+                        </ol>
+                        
+                        <h6 class="fw-bold mb-2" data-i18n="filter_example">参数过滤示例：</h6>
+                        <pre>{"from": "0x1234567890123456789012345678901234567890"}</pre>
+                    </div>
+                </div>
+
+                <!-- MetaMask 连接 -->
+                <div id="metamask" class="card mb-4 section">
+                    <div class="card-header bg-warning text-white">
+                        <i class="bi bi-wallet2 me-2"></i><span data-i18n="metamask">MetaMask 连接</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-3" data-i18n="metamask_desc">本工具支持连接 MetaMask 钱包，方便直接使用钱包进行交易签名。</p>
+                        
+                        <h6 class="fw-bold mb-2" data-i18n="metamask_steps">连接步骤：</h6>
+                        <ol class="list-decimal pl-5 mb-4">
+                            <li data-i18n="metamask_step_1">点击左侧边栏"Web3 Wallet"下的"连接 MetaMask"按钮</li>
+                            <li data-i18n="metamask_step_2">在 MetaMask 弹出的窗口中授权连接</li>
+                            <li data-i18n="metamask_step_3">连接成功后，会显示当前连接的账户地址</li>
+                        </ol>
+                        
+                        <div class="alert alert-info" role="alert">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong data-i18n="metamask_tip">提示</strong>：<span data-i18n="metamask_tip_desc">连接 MetaMask 后，您可以直接使用钱包中的账户进行交易签名，无需在工具中存储私钥。</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 调用历史记录 -->
+                <div id="history" class="card mb-4 section">
+                    <div class="card-header bg-success text-white">
+                        <i class="bi bi-clock-history me-2"></i><span data-i18n="history">调用历史记录</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-3" data-i18n="history_desc">调用历史记录功能会保存您的合约调用历史，方便查看和重新调用。</p>
+                        
+                        <h6 class="fw-bold mb-2" data-i18n="history_features">功能说明：</h6>
+                        <ul class="list-disc pl-5 mb-4">
+                            <li data-i18n="history_feature_1">自动记录所有合约调用（包括成功和失败）</li>
+                            <li data-i18n="history_feature_2">显示调用时间、类型、方法、参数和结果</li>
+                            <li data-i18n="history_feature_3">支持重新调用历史记录中的方法</li>
+                            <li data-i18n="history_feature_4">支持刷新和清空历史记录</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 常见问题 -->
+                <div id="troubleshooting" class="card mb-4 section">
+                    <div class="card-header bg-danger text-white">
+                        <i class="bi bi-question-circle me-2"></i><span data-i18n="troubleshooting">常见问题</span>
+                    </div>
+                    <div class="card-body">
+                        <h6 class="fw-bold mb-3" data-i18n="faq">Q&A：</h6>
+                        
+                        <div class="mb-4">
+                            <h6 class="fw-bold" data-i18n="faq_q1">Q: 连接 RPC 节点失败怎么办？</h6>
+                            <p data-i18n="faq_a1">A: 请检查 RPC URL 是否正确，网络是否通畅，或者尝试使用其他 RPC 节点。</p>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h6 class="fw-bold" data-i18n="faq_q2">Q: 执行合约方法时出现错误？</h6>
+                            <p data-i18n="faq_a2_1">A: 请检查：
+                                <ul class="list-disc pl-5 mt-2">
+                                    <li data-i18n="faq_a2_2">合约地址是否正确</li>
+                                    <li data-i18n="faq_a2_3">ABI 文件是否与合约匹配</li>
+                                    <li data-i18n="faq_a2_4">参数是否正确</li>
+                                    <li data-i18n="faq_a2_5">账户余额是否足够支付 gas 费用</li>
+                                    <li data-i18n="faq_a2_6">网络是否拥堵</li>
+                                </ul>
+                            </p>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h6 class="fw-bold" data-i18n="faq_q3">Q: 如何获取智能合约的 ABI？</h6>
+                            <p data-i18n="faq_a3_1">A: 您可以从以下途径获取 ABI：
+                                <ul class="list-disc pl-5 mt-2">
+                                    <li data-i18n="faq_a3_2">从智能合约编译工具（如 Remix、Hardhat、Truffle）导出</li>
+                                    <li data-i18n="faq_a3_3">从 Etherscan 等区块浏览器获取已验证合约的 ABI</li>
+                                    <li data-i18n="faq_a3_4">从合约开发者处获取</li>
+                                </ul>
+                            </p>
+                        </div>
+                        
+                        <div>
+                            <h6 class="fw-bold" data-i18n="faq_q4">Q: 工具支持哪些网络？</h6>
+                            <p data-i18n="faq_a4">A: 本工具支持所有 EVM 兼容的区块链网络，包括但不限于 Ethereum、BSC、Polygon、Arbitrum、Optimism、Base、Avalanche、Linea 等。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 语言切换功能
+        const translations = {
+            'zh': {
+                'nav_title': 'EVM API 控制面板',
+                'back_home': '返回首页',
+                'lang_btn': 'English',
+                'usage_title': '使用说明',
+                'toc_title': '目录',
+                'overview': '工具概述',
+                'overview_desc': 'EVM API 控制面板是一个专业的 Web3 开发者工具，支持以太坊虚拟机(EVM)合约交互、ABI 管理、MetaMask 连接、交易解码及事件日志查询。支持多链节点切换，助力高效智能合约开发。',
+                'core_features': '核心功能：',
+                'feature_1': '智能合约交互（Read/Write 方法）',
+                'feature_2': '多链 RPC 节点配置与切换',
+                'feature_3': 'ABI 文件上传与管理',
+                'feature_4': 'MetaMask 钱包连接',
+                'feature_5': '交易数据解码',
+                'feature_6': '合约事件日志查询',
+                'feature_7': '调用历史记录管理',
+                'quick_start': '快速开始',
+                'usage_steps': '使用步骤：',
+                'step_1': '步骤 1：登录/注册',
+                'step_1_desc': '首先需要登录或注册一个账号，获取访问权限。',
+                'step_2': '步骤 2：配置账户',
+                'step_2_desc': '在左侧边栏的"账户配置"部分添加您的钱包账户，包括别名、私钥和地址。',
+                'step_3': '步骤 3：配置 RPC 节点',
+                'step_3_desc': '在"链/RPC 节点"部分添加您需要使用的区块链网络 RPC 节点。',
+                'step_4': '步骤 4：上传 ABI',
+                'step_4_desc': '在"ABI 管理"部分上传您的智能合约 ABI 文件，以便后续调用合约方法。',
+                'step_5': '步骤 5：开始合约交互',
+                'step_5_desc': '在"合约交互"标签页中，输入合约地址、选择 ABI 和链/RPC，然后加载并执行合约方法。',
+                'account_config': '账户配置',
+                'account_config_desc': '账户配置用于存储您的钱包信息，方便在调用合约时选择使用。',
+                'add_account': '添加账户：',
+                'account_step_1': '点击左侧边栏"账户配置"下的"添加配置"按钮',
+                'account_step_2': '在弹出的模态框中填写：',
+                'account_alias': '别名',
+                'account_alias_desc': '账户的昵称，方便识别',
+                'account_pk': '私钥',
+                'account_pk_desc': '钱包的私钥（用于签名交易）',
+                'account_addr': '地址',
+                'account_addr_desc': '钱包的地址',
+                'account_step_3': '点击"保存账户"按钮',
+                'security_tip': '安全提示',
+                'security_tip_desc': '请确保在安全的环境中使用此工具，不要在公共网络或不安全的设备上输入私钥。',
+                'rpc_config': 'RPC 节点配置',
+                'rpc_config_desc': 'RPC 节点配置用于连接不同的区块链网络，支持自定义 RPC 地址。',
+                'add_rpc': '添加 RPC 节点：',
+                'rpc_step_1': '点击左侧边栏"链/RPC 节点"下的"添加配置"按钮',
+                'rpc_step_2': '在弹出的模态框中填写：',
+                'rpc_chain_id': '链 ID',
+                'rpc_chain_id_desc': '区块链网络的链 ID（如以太坊主网为 1）',
+                'rpc_alias': '别名',
+                'rpc_alias_desc': '网络的昵称，方便识别',
+                'rpc_url': 'RPC URL',
+                'rpc_url_desc': 'RPC 节点的 URL 地址',
+                'rpc_step_3': '点击"保存 RPC"按钮',
+                'supported_networks': '支持的网络：',
+                'abi_management': 'ABI 管理',
+                'abi_management_desc': 'ABI（应用程序二进制接口）是与智能合约交互的关键，包含了合约的方法、事件等信息。',
+                'upload_abi': '上传 ABI：',
+                'abi_step_1': '点击左侧边栏"ABI 管理"下的"上传 ABI"按钮',
+                'abi_step_2': '在弹出的模态框中填写：',
+                'abi_name': 'ABI 名称',
+                'abi_name_desc': 'ABI 文件的名称，方便识别',
+                'abi_content': 'ABI 内容',
+                'abi_content_desc': '智能合约的 ABI JSON 数组',
+                'abi_step_3': '点击"上传"按钮',
+                'abi_example': 'ABI 格式示例：',
+                'contract_interaction': '合约交互',
+                'contract_interaction_desc': '合约交互是本工具的核心功能，支持调用智能合约的读写方法。',
+                'contract_steps': '使用步骤：',
+                'contract_step_1': '在"合约地址"输入框中填写智能合约的地址',
+                'contract_step_2': '从"ABI"下拉菜单中选择已上传的 ABI 文件',
+                'contract_step_3': '从"链/RPC"下拉菜单中选择要连接的网络',
+                'contract_step_4': '点击"加载方法"按钮，系统会解析并显示合约的所有方法',
+                'contract_step_5': '从左侧方法列表中选择要调用的方法',
+                'contract_step_6': '根据方法要求填写参数（如果有）',
+                'contract_step_7': '对于写入方法（Write），选择发送账户和设置 value（如果需要）',
+                'contract_step_8': '点击"执行方法"按钮',
+                'contract_step_9': '查看执行结果',
+                'method_types': '方法类型：',
+                'read_method': 'Read 方法',
+                'read_method_desc': '无需签名，直接查询合约状态',
+                'write_method': 'Write 方法',
+                'write_method_desc': '需要签名交易，会改变合约状态',
+                'tools': '辅助工具',
+                'tools_desc': '辅助工具提供了交易回执查询和解码功能，方便开发者调试。',
+                'get_receipt': '获取交易回执：',
+                'receipt_step_1': '在"获取交易回执"卡片中输入交易哈希',
+                'receipt_step_2': '选择对应的链/RPC',
+                'receipt_step_3': '点击"查询回执"按钮',
+                'receipt_step_4': '查看交易的详细信息，包括状态、gas 使用情况等',
+                'decode_tx': '解码交易数据：',
+                'decode_step_1': '在"解码交易数据"卡片中输入编码数据（Input Data）',
+                'decode_step_2': '选择对应的 ABI 文件',
+                'decode_step_3': '点击"解码数据"按钮',
+                'decode_step_4': '查看解码后的方法名和参数',
+                'events': '事件日志查询',
+                'events_desc': '事件日志查询功能允许您查询智能合约发出的事件，方便跟踪合约活动。',
+                'events_steps': '使用步骤：',
+                'events_step_1': '输入合约地址',
+                'events_step_2': '选择对应的 ABI 文件',
+                'events_step_3': '选择要连接的链/RPC',
+                'events_step_4': '输入事件名称（如 Transfer）',
+                'events_step_5': '设置起始区块和结束区块',
+                'events_step_6': '（可选）输入参数过滤条件（JSON 格式）',
+                'events_step_7': '点击"查询事件"按钮',
+                'events_step_8': '查看事件日志列表',
+                'filter_example': '参数过滤示例：',
+                'metamask': 'MetaMask 连接',
+                'metamask_desc': '本工具支持连接 MetaMask 钱包，方便直接使用钱包进行交易签名。',
+                'metamask_steps': '连接步骤：',
+                'metamask_step_1': '点击左侧边栏"Web3 Wallet"下的"连接 MetaMask"按钮',
+                'metamask_step_2': '在 MetaMask 弹出的窗口中授权连接',
+                'metamask_step_3': '连接成功后，会显示当前连接的账户地址',
+                'metamask_tip': '提示',
+                'metamask_tip_desc': '连接 MetaMask 后，您可以直接使用钱包中的账户进行交易签名，无需在工具中存储私钥。',
+                'history': '调用历史记录',
+                'history_desc': '调用历史记录功能会保存您的合约调用历史，方便查看和重新调用。',
+                'history_features': '功能说明：',
+                'history_feature_1': '自动记录所有合约调用（包括成功和失败）',
+                'history_feature_2': '显示调用时间、类型、方法、参数和结果',
+                'history_feature_3': '支持重新调用历史记录中的方法',
+                'history_feature_4': '支持刷新和清空历史记录',
+                'troubleshooting': '常见问题',
+                'faq': 'Q&A：',
+                'faq_q1': 'Q: 连接 RPC 节点失败怎么办？',
+                'faq_a1': 'A: 请检查 RPC URL 是否正确，网络是否通畅，或者尝试使用其他 RPC 节点。',
+                'faq_q2': 'Q: 执行合约方法时出现错误？',
+                'faq_a2_1': 'A: 请检查：',
+                'faq_a2_2': '合约地址是否正确',
+                'faq_a2_3': 'ABI 文件是否与合约匹配',
+                'faq_a2_4': '参数是否正确',
+                'faq_a2_5': '账户余额是否足够支付 gas 费用',
+                'faq_a2_6': '网络是否拥堵',
+                'faq_q3': 'Q: 如何获取智能合约的 ABI？',
+                'faq_a3_1': 'A: 您可以从以下途径获取 ABI：',
+                'faq_a3_2': '从智能合约编译工具（如 Remix、Hardhat、Truffle）导出',
+                'faq_a3_3': '从 Etherscan 等区块浏览器获取已验证合约的 ABI',
+                'faq_a3_4': '从合约开发者处获取',
+                'faq_q4': 'Q: 工具支持哪些网络？',
+                'faq_a4': 'A: 本工具支持所有 EVM 兼容的区块链网络，包括但不限于 Ethereum、BSC、Polygon、Arbitrum、Optimism、Base、Avalanche、Linea 等。'
+            },
+            'en': {
+                'nav_title': 'EVM API Dashboard',
+                'back_home': 'Back to Home',
+                'lang_btn': '中文',
+                'usage_title': 'Usage Guide',
+                'toc_title': 'Table of Contents',
+                'overview': 'Overview',
+                'overview_desc': 'EVM API Dashboard is a professional Web3 developer tool that supports Ethereum Virtual Machine (EVM) contract interaction, ABI management, MetaMask connection, transaction decoding, and event log query. It supports multi-chain node switching to facilitate efficient smart contract development.',
+                'core_features': 'Core Features:',
+                'feature_1': 'Smart contract interaction (Read/Write methods)',
+                'feature_2': 'Multi-chain RPC node configuration and switching',
+                'feature_3': 'ABI file upload and management',
+                'feature_4': 'MetaMask wallet connection',
+                'feature_5': 'Transaction data decoding',
+                'feature_6': 'Contract event log query',
+                'feature_7': 'Call history management',
+                'quick_start': 'Quick Start',
+                'usage_steps': 'Usage Steps:',
+                'step_1': 'Step 1: Login/Register',
+                'step_1_desc': 'First, you need to log in or register an account to gain access.',
+                'step_2': 'Step 2: Configure Account',
+                'step_2_desc': 'Add your wallet account in the "Account Configuration" section of the left sidebar, including alias, private key, and address.',
+                'step_3': 'Step 3: Configure RPC Node',
+                'step_3_desc': 'Add the blockchain network RPC nodes you need to use in the "Chain/RPC Node" section.',
+                'step_4': 'Step 4: Upload ABI',
+                'step_4_desc': 'Upload your smart contract ABI file in the "ABI Management" section for subsequent contract method calls.',
+                'step_5': 'Step 5: Start Contract Interaction',
+                'step_5_desc': 'In the "Contract Interaction" tab, enter the contract address, select ABI and chain/RPC, then load and execute contract methods.',
+                'account_config': 'Account Configuration',
+                'account_config_desc': 'Account configuration is used to store your wallet information for easy selection when calling contracts.',
+                'add_account': 'Add Account:',
+                'account_step_1': 'Click the "Add Config" button under "Account Configuration" in the left sidebar',
+                'account_step_2': 'Fill in the pop-up modal:',
+                'account_alias': 'Alias',
+                'account_alias_desc': 'Account nickname for easy identification',
+                'account_pk': 'Private Key',
+                'account_pk_desc': 'Wallet private key (used for signing transactions)',
+                'account_addr': 'Address',
+                'account_addr_desc': 'Wallet address',
+                'account_step_3': 'Click the "Save Account" button',
+                'security_tip': 'Security Tip',
+                'security_tip_desc': 'Please ensure you use this tool in a secure environment and do not enter private keys on public networks or insecure devices.',
+                'rpc_config': 'RPC Node Configuration',
+                'rpc_config_desc': 'RPC node configuration is used to connect to different blockchain networks and supports custom RPC addresses.',
+                'add_rpc': 'Add RPC Node:',
+                'rpc_step_1': 'Click the "Add Config" button under "Chain/RPC Node" in the left sidebar',
+                'rpc_step_2': 'Fill in the pop-up modal:',
+                'rpc_chain_id': 'Chain ID',
+                'rpc_chain_id_desc': 'Blockchain network chain ID (e.g., Ethereum mainnet is 1)',
+                'rpc_alias': 'Alias',
+                'rpc_alias_desc': 'Network nickname for easy identification',
+                'rpc_url': 'RPC URL',
+                'rpc_url_desc': 'RPC node URL address',
+                'rpc_step_3': 'Click the "Save RPC" button',
+                'supported_networks': 'Supported Networks:',
+                'abi_management': 'ABI Management',
+                'abi_management_desc': 'ABI (Application Binary Interface) is the key to interacting with smart contracts, containing information about contract methods, events, etc.',
+                'upload_abi': 'Upload ABI:',
+                'abi_step_1': 'Click the "Upload ABI" button under "ABI Management" in the left sidebar',
+                'abi_step_2': 'Fill in the pop-up modal:',
+                'abi_name': 'ABI Name',
+                'abi_name_desc': 'ABI file name for easy identification',
+                'abi_content': 'ABI Content',
+                'abi_content_desc': 'Smart contract ABI JSON array',
+                'abi_step_3': 'Click the "Upload" button',
+                'abi_example': 'ABI Format Example:',
+                'contract_interaction': 'Contract Interaction',
+                'contract_interaction_desc': 'Contract interaction is the core feature of this tool, supporting calling read and write methods of smart contracts.',
+                'contract_steps': 'Usage Steps:',
+                'contract_step_1': 'Enter the smart contract address in the "Contract Address" input box',
+                'contract_step_2': 'Select the uploaded ABI file from the "ABI" dropdown menu',
+                'contract_step_3': 'Select the network to connect to from the "Chain/RPC" dropdown menu',
+                'contract_step_4': 'Click the "Load Methods" button, the system will parse and display all contract methods',
+                'contract_step_5': 'Select the method to call from the left method list',
+                'contract_step_6': 'Fill in parameters according to method requirements (if any)',
+                'contract_step_7': 'For write methods, select the sending account and set value (if needed)',
+                'contract_step_8': 'Click the "Execute Method" button',
+                'contract_step_9': 'View execution results',
+                'method_types': 'Method Types:',
+                'read_method': 'Read Method',
+                'read_method_desc': 'No signature required, directly query contract state',
+                'write_method': 'Write Method',
+                'write_method_desc': 'Requires transaction signature, changes contract state',
+                'tools': 'Tools',
+                'tools_desc': 'Tools provide transaction receipt query and decoding functions for developer debugging.',
+                'get_receipt': 'Get Transaction Receipt:',
+                'receipt_step_1': 'Enter the transaction hash in the "Get Transaction Receipt" card',
+                'receipt_step_2': 'Select the corresponding chain/RPC',
+                'receipt_step_3': 'Click the "Query Receipt" button',
+                'receipt_step_4': 'View transaction details, including status, gas usage, etc.',
+                'decode_tx': 'Decode Transaction Data:',
+                'decode_step_1': 'Enter the encoded data (Input Data) in the "Decode Transaction Data" card',
+                'decode_step_2': 'Select the corresponding ABI file',
+                'decode_step_3': 'Click the "Decode Data" button',
+                'decode_step_4': 'View the decoded method name and parameters',
+                'events': 'Event Log Query',
+                'events_desc': 'Event log query function allows you to query events emitted by smart contracts, facilitating contract activity tracking.',
+                'events_steps': 'Usage Steps:',
+                'events_step_1': 'Enter contract address',
+                'events_step_2': 'Select the corresponding ABI file',
+                'events_step_3': 'Select the chain/RPC to connect to',
+                'events_step_4': 'Enter event name (e.g., Transfer)',
+                'events_step_5': 'Set start and end blocks',
+                'events_step_6': '(Optional) Enter parameter filter conditions (JSON format)',
+                'events_step_7': 'Click the "Query Events" button',
+                'events_step_8': 'View event log list',
+                'filter_example': 'Parameter Filter Example:',
+                'metamask': 'MetaMask Connection',
+                'metamask_desc': 'This tool supports connecting to MetaMask wallet for direct wallet transaction signing.',
+                'metamask_steps': 'Connection Steps:',
+                'metamask_step_1': 'Click the "Connect MetaMask" button under "Web3 Wallet" in the left sidebar',
+                'metamask_step_2': 'Authorize connection in the MetaMask pop-up window',
+                'metamask_step_3': 'After successful connection, the current connected account address will be displayed',
+                'metamask_tip': 'Tip',
+                'metamask_tip_desc': 'After connecting MetaMask, you can directly use the accounts in your wallet for transaction signing without storing private keys in the tool.',
+                'history': 'Call History',
+                'history_desc': 'Call history function saves your contract call history for easy viewing and re-calling.',
+                'history_features': 'Feature Description:',
+                'history_feature_1': 'Automatically records all contract calls (including success and failure)',
+                'history_feature_2': 'Displays call time, type, method, parameters, and results',
+                'history_feature_3': 'Supports re-calling methods from history',
+                'history_feature_4': 'Supports refreshing and clearing history',
+                'troubleshooting': 'Troubleshooting',
+                'faq': 'Q&A:',
+                'faq_q1': 'Q: What to do if RPC node connection fails?',
+                'faq_a1': 'A: Please check if the RPC URL is correct, if the network is smooth, or try using another RPC node.',
+                'faq_q2': 'Q: Error when executing contract method?',
+                'faq_a2_1': 'A: Please check:',
+                'faq_a2_2': 'Is the contract address correct',
+                'faq_a2_3': 'Is the ABI file matching the contract',
+                'faq_a2_4': 'Are parameters correct',
+                'faq_a2_5': 'Is the account balance sufficient to pay gas fees',
+                'faq_a2_6': 'Is the network congested',
+                'faq_q3': 'Q: How to get smart contract ABI?',
+                'faq_a3_1': 'A: You can get ABI from the following sources:',
+                'faq_a3_2': 'Export from smart contract compilation tools (such as Remix, Hardhat, Truffle)',
+                'faq_a3_3': 'Get from block explorers like Etherscan for verified contracts',
+                'faq_a3_4': 'Get from contract developers',
+                'faq_q4': 'Q: Which networks does the tool support?',
+                'faq_a4': 'A: This tool supports all EVM-compatible blockchain networks, including but not limited to Ethereum, BSC, Polygon, Arbitrum, Optimism, Base, Avalanche, Linea, etc.'
+            }
+        };
+
+        let currentLang = localStorage.getItem('lang') || 'zh';
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            localStorage.setItem('lang', currentLang);
+            updateUI();
+        }
+
+        function updateUI() {
+            // 更新所有带有 data-i18n 属性的元素
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[currentLang][key]) {
+                    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                        el.placeholder = translations[currentLang][key];
+                    } else {
+                        el.innerText = translations[currentLang][key];
+                    }
+                }
+            });
+
+            // 更新目录链接
+            const sections = ['overview', 'quick-start', 'account-config', 'rpc-config', 'abi-management', 'contract-interaction', 'tools', 'events', 'metamask', 'history', 'troubleshooting'];
+            const sectionNames = ['overview', 'quick_start', 'account_config', 'rpc_config', 'abi_management', 'contract_interaction', 'tools', 'events', 'metamask', 'history', 'troubleshooting'];
+
+            sections.forEach((section, index) => {
+                const link = document.querySelector(`.toc-link[href="#${section}"]`);
+                if (link) {
+                    link.innerText = translations[currentLang][sectionNames[index]];
+                }
+            });
+        }
+
+        // 初始化
+        updateUI();
+
+        // 目录链接点击事件
+        document.querySelectorAll('.toc-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // 移除所有活动状态
+                document.querySelectorAll('.toc-link').forEach(l => l.classList.remove('active'));
+                
+                // 添加当前活动状态
+                this.classList.add('active');
+                
+                // 滚动到目标部分
+                const targetId = this.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    targetElement.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+
+        // 滚动事件，更新目录活动状态
+        window.addEventListener('scroll', function() {
+            const sections = document.querySelectorAll('.section');
+            let currentSection = '';
+
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (pageYOffset >= sectionTop - 200) {
+                    currentSection = section.getAttribute('id');
+                }
+            });
+
+            if (currentSection) {
+                document.querySelectorAll('.toc-link').forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === `#${currentSection}`) {
+                        link.classList.add('active');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
