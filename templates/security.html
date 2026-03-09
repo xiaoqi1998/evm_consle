@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -353,7 +353,7 @@ async function deriveKey(password, salt) {
     return window.crypto.subtle.deriveKey(
         { 
             name: "PBKDF2", 
-            salt: encoder.encode(salt),  // 使用账户别名作为 salt
+            salt: salt,  // 使用加密学安全的随机 salt
             iterations: 600000,          // 60 万次迭代
             hash: "SHA-256"              // SHA-256 哈希
         },
@@ -405,7 +405,8 @@ async deriveKey(password, salt) {
 async saveEncryptedSlice(alias, sliceB, password) {
     try {
         const iv = window.crypto.getRandomValues(new Uint8Array(12));
-        const key = await this.deriveKey(password, alias); // 别名作为盐值
+        const salt = window.crypto.getRandomValues(new Uint8Array(16));  // 加密学安全的随机 salt
+        const key = await this.deriveKey(password, salt);
         
         const encrypted = await window.crypto.subtle.encrypt(
             { name: "AES-GCM", iv },
@@ -413,8 +414,9 @@ async saveEncryptedSlice(alias, sliceB, password) {
             new TextEncoder().encode(sliceB)
         );
         
-        // 将 IV 和密文拼接存储
+        // 将 Salt、IV 和密文拼接存储
         const result = {
+            salt: Array.from(salt),  // 新增：存储 salt 用于解密
             iv: Array.from(iv),
             data: Array.from(new Uint8Array(encrypted))
         };
@@ -452,8 +454,9 @@ async getDecryptedSlice(alias, password = null) {
             if (!password) {
                 throw new Error("SESSION_EXPIRED");
             }
-            // 使用传入的密码派生 Key
-            key = await this.deriveKey(password, alias);
+            // 使用传入的密码和存储的 salt 派生 Key
+            const salt = new Uint8Array(parsed.salt);
+            key = await this.deriveKey(password, salt);
             // 缓存 Key
             this._setSessionKey(alias, key);
         }

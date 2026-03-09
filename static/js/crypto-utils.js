@@ -221,7 +221,8 @@ const SecureStorage = {
     async saveEncryptedSlice(alias, sliceB, password) {
         try {
             const iv = window.crypto.getRandomValues(new Uint8Array(12));
-            const key = await this.deriveKey(password, alias); // 账户名作为盐
+            const salt = window.crypto.getRandomValues(new Uint8Array(16));
+            const key = await this.deriveKey(password, salt);
             
             const encrypted = await window.crypto.subtle.encrypt(
                 { name: "AES-GCM", iv },
@@ -229,8 +230,9 @@ const SecureStorage = {
                 new TextEncoder().encode(sliceB)
             );
             
-            // 将 IV 和密文拼接存储
+            // 将 Salt、IV 和密文拼接存储
             const result = {
+                salt: Array.from(salt),
                 iv: Array.from(iv),
                 data: Array.from(new Uint8Array(encrypted))
             };
@@ -266,8 +268,9 @@ const SecureStorage = {
                     // 这里抛出一个特定错误，由 index.js 获取并触发 prompt
                     throw new Error("SESSION_EXPIRED");
                 }
-                // 用传入的密码推导 Key
-                key = await this.deriveKey(password, alias);
+                // 用传入的密码和存储的 salt 推导 Key
+                const salt = new Uint8Array(parsed.salt);
+                key = await this.deriveKey(password, salt);
                 // 缓存 Key
                 this._setSessionKey(alias, key);
             }
