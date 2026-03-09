@@ -12,7 +12,7 @@ from web3 import Web3
 
 import config as global_config
 from extensions import db
-from models import Abi, CallHistory, User
+from models import Abi, CallHistory, RpcConfig, User
 
 
 def retry_on_db_error(max_retries=3, delay=1):
@@ -183,13 +183,6 @@ def save_call_history(username, method_type, contract, method, args, result=None
 def get_user_rpcs():
     rpcs_map = {}
 
-    for chain_id, conf in global_config.TESTNET_RPC_URLS.items():
-        url = conf["rpc_url"]
-        alias = conf.get("alias")
-        rpcs_map[str(chain_id)] = url
-        if alias:
-            rpcs_map[alias] = url
-
     username = get_current_username()
     if username:
         user = User.query.filter_by(username=username).first()
@@ -198,6 +191,16 @@ def get_user_rpcs():
                 rpcs_map[str(rpc.chain_id)] = rpc.rpc_url
                 if rpc.alias:
                     rpcs_map[rpc.alias] = rpc.rpc_url
+
+    for conf in global_config.GLOBAL_DEFAULT_RPCS:
+        url = conf["rpc_url"]
+        alias = conf.get("alias")
+        chain_id = str(conf["chain_id"])
+        if chain_id not in rpcs_map:
+            rpcs_map[chain_id] = url
+        if alias:
+            if alias not in rpcs_map:
+                rpcs_map[alias] = url
 
     return rpcs_map
 

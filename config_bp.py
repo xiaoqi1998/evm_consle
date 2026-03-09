@@ -10,10 +10,10 @@ import socket
 import ipaddress
 from urllib.parse import urlparse
 
-# 鍒涘缓閰嶇疆绠＄悊钃濆浘
+# 创建配置管理蓝图
 config_bp = Blueprint('config', __name__)
 
-# --- 閰嶇疆绠＄悊璺敱 ---
+# --- 配置管理路由 ---
 @config_bp.route('/get_configs', methods=['GET'])
 @login_required_or_token
 @retry_on_db_error()
@@ -22,17 +22,30 @@ def get_configs():
         username = g.user_username
         user = User.query.filter_by(username=username).first()
         
-        # 1. 鑾峰彇瀹屾暣鐨勮处鎴峰瓧鍏?{"alias": {"address":...}}
+        # 1. 获取完整的账户字典{"alias": {"address":...}}
         full_accounts = get_user_accounts() 
         
-        # 銆愭牳蹇冧慨澶嶃€戝墠绔?forEach 闇€瑕佺殑鏄埆鍚嶅垪琛?["my_acc"]
+        # 【核心备份】前端forEach 需要的是别名列表["my_acc"]
         account_aliases = list(full_accounts.keys())
 
-        # 2. 鑾峰彇 RPC 鍒楄〃 (纭繚杩斿洖鐨勬槸鍒楄〃鏍煎紡)
+        # 2. 获取 RPC 列表 (确保返回的是列表格式)
         chains = []
         processed_ids = set()
         
-        # 鍔犺浇鐢ㄦ埛绉佹湁 RPC
+        # 加载默认 RPC
+        for conf in global_config.GLOBAL_DEFAULT_RPCS:
+            cid_str = str(conf["chain_id"])
+            if cid_str in processed_ids:
+                chains = [c for c in chains if c['chain_id'] != cid_str]
+            
+            chains.append({
+                "chain_id": cid_str,
+                "alias": conf.get("alias", cid_str),
+                "rpc_url": conf["rpc_url"]
+            })
+            processed_ids.add(cid_str)
+        
+        # 加载用户自有 RPC（覆盖默认 RPC）
         if user:
             for rpc in user.rpcs:
                 cid_str = str(rpc.chain_id)
@@ -45,10 +58,10 @@ def get_configs():
                     "rpc_url": rpc.rpc_url
                 })
 
-        # 銆愬叧閿€戣繑鍥炵殑缁撴瀯蹇呴』涓ユ牸鍖归厤 index.js 鐨勮В鏋愰€昏緫
+        # 【关键】返回的结构必须严格匹配 index.js 的解析逻辑
         return create_response(data={
-            "accounts": account_aliases,          # 蹇呴』鏄垪琛?[str, str]
-            "chains": chains                      # 蹇呴』鏄垪琛?[obj, obj]
+            "accounts": account_aliases,          # 必须是列表[str, str]
+            "chains": chains                      # 必须是列表[obj, obj]
         })
     except Exception as e:
         import traceback
@@ -60,32 +73,34 @@ def get_configs():
 @login_required_or_token
 def get_accounts_api():
     """
-    鑾峰彇璐︽埛鍒楄〃
+    获取账户列表
     ---    
     tags:
-      - 璐︽埛绠＄悊
+      - 账户管理
     security:
       - api_key: []
     responses:
       200:
-        description: 鑾峰彇璐︽埛鍒楄〃鎴愬姛
+        description: 获取账户列表成功
         schema:
           type: object
           properties:
             accounts:
               type: object
-              description: 璐︽埛鍒楄〃锛岄敭涓鸿处鎴峰埆鍚嶏紝鍊间负璐︽埛淇℃伅
+              description: 账户列表，键为账户别名，值为账户信息
       401:
-        description: 鏈巿鏉?    """
+        description: 未授权
+    """
     return create_response(data=get_user_accounts())
 
 @config_bp.route('/api/accounts/<alias>', methods=['GET'])
 @login_required_or_token
 def get_account(alias):
     """
-    鑾峰彇鎸囧畾鍒悕鐨勮处鎴蜂俊鎭?    ---    
+    获取指定别名的账户信息
+    ---    
     tags:
-      - 璐︽埛绠＄悊
+      - 账户管理
     security:
       - api_key: []
     parameters:
@@ -93,22 +108,24 @@ def get_account(alias):
         in: path
         required: true
         type: string
-        description: 璐︽埛鍒悕
+        description: 账户别名
     responses:
       200:
-        description: 鑾峰彇璐︽埛淇℃伅鎴愬姛
+        description: 获取账户信息成功
         schema:
           type: object
           properties:
             address:
               type: string
-              description: 璐︽埛鍦板潃
+              description: 账户地址
             pk_slice_server:
               type: string
-              description: 鏈嶅姟鍣ㄥ瓨鍌ㄧ殑绉侀挜鍒囩墖
+              description: 服务器存储的私钥分片
       404:
-        description: 璐︽埛鏈壘鍒?      401:
-        description: 鏈巿鏉?    """
+        description: 账户未找到
+      401:
+        description: 未授权
+    """
     username = g.user_username if hasattr(g, 'user_username') else None
     user = User.query.filter_by(username=username).first() if username else None
     
@@ -127,10 +144,10 @@ def get_account(alias):
 @login_required_or_token
 def add_account():
     """
-    娣诲姞璐︽埛
+    添加账户
     ---    
     tags:
-      - 璐︽埛绠＄悊
+      - 账户管理
     security:
       - api_key: []
     parameters:
@@ -146,20 +163,21 @@ def add_account():
           properties:
             alias:
               type: string
-              description: 璐︽埛鍒悕
+              description: 账户别名
             address:
               type: string
-              description: 璐︽埛鍦板潃
+              description: 账户地址
             pk_slice_server:
               type: string
-              description: 鏈嶅姟鍣ㄥ瓨鍌ㄧ殑绉侀挜鍒囩墖
+              description: 服务器存储的私钥分片
     responses:
       200:
-        description: 娣诲姞璐︽埛鎴愬姛
+        description: 添加账户成功
       400:
-        description: 鍙傛暟閿欒
+        description: 参数错误
       401:
-        description: 鏈巿鏉?    """
+        description: 未授权
+    """
     data = request.json
     alias = data.get('alias')
     address = data.get('address')
@@ -188,10 +206,10 @@ def add_account():
 @login_required_or_token
 def save_account():
     """
-    淇濆瓨璐︽埛
+    保存账户
     ---    
     tags:
-      - 璐︽埛绠＄悊
+      - 账户管理
     security:
       - api_key: []
     parameters:
@@ -207,20 +225,21 @@ def save_account():
           properties:
             alias:
               type: string
-              description: 璐︽埛鍒悕
+              description: 账户别名
             address:
               type: string
-              description: 璐︽埛鍦板潃
+              description: 账户地址
             pk_slice_server:
               type: string
-              description: 鏈嶅姟鍣ㄥ瓨鍌ㄧ殑绉侀挜鍒囩墖
+              description: 服务器存储的私钥分片
     responses:
       200:
-        description: 淇濆瓨璐︽埛鎴愬姛
+        description: 保存账户成功
       400:
-        description: 鍙傛暟閿欒
+        description: 参数错误
       401:
-        description: 鏈巿鏉?    """
+        description: 未授权
+    """
     data = request.json
     alias = data.get('alias')
     address = data.get('address')
@@ -248,10 +267,10 @@ def save_account():
 @login_required_or_token
 def delete_account_api(alias):
     """
-    鍒犻櫎璐︽埛
+    删除账户
     ---    
     tags:
-      - 璐︽埛绠＄悊
+      - 账户管理
     security:
       - api_key: []
     parameters:
@@ -259,16 +278,18 @@ def delete_account_api(alias):
         in: path
         required: true
         type: string
-        description: 璐︽埛鍒悕
+        description: 账户别名
     responses:
       200:
-        description: 鍒犻櫎璐︽埛鎴愬姛
+        description: 删除账户成功
       403:
-        description: 绯荤粺璐︽埛绂佹鍒犻櫎
+        description: 系统账户禁止删除
       404:
-        description: 璐︽埛鏈壘鍒?      401:
-        description: 鏈巿鏉?    """
-    # 绂佹鍒犻櫎绯荤粺棰勮璐︽埛锛堝凡绉婚櫎榛樿璐︽埛锛屾墍鏈夎处鎴峰潎鍙垹闄わ級
+        description: 账户未找到
+      401:
+        description: 未授权
+    """
+    # 禁止删除系统预设账户（已移除默认账户）所有账户均可删除
     username = g.user_username if hasattr(g, 'user_username') else None
     user = User.query.filter_by(username=username).first() if username else None
     
@@ -284,39 +305,55 @@ def delete_account_api(alias):
 @login_required_or_token
 def get_rpcs_api():
     """
-    鑾峰彇RPC鍒楄〃
+    获取RPC列表
     ---    
     tags:
-      - RPC绠＄悊
+      - RPC管理
     security:
       - api_key: []
     responses:
       200:
-        description: 鑾峰彇RPC鍒楄〃鎴愬姛
+        description: 获取RPC列表成功
         schema:
           type: object
           properties:
             rpcs:
               type: object
-              description: RPC鍒楄〃锛岄敭涓洪摼ID锛屽€间负RPC URL
+              description: RPC列表，键为链ID，值为RPC URL
       401:
-        description: 鏈巿鏉?    """
+        description: 未授权
+    """
     username = g.user_username if hasattr(g, 'user_username') else None
-    # 鍔犺浇鐢ㄦ埛鑷畾涔?RPC
+    # 加载默认 RPC
     result = []
     processed_ids = set()
     
+    for conf in global_config.GLOBAL_DEFAULT_RPCS:
+        chain_id = str(conf["chain_id"])
+        if chain_id in processed_ids:
+            result = [r for r in result if r['chain_id'] != chain_id]
+        
+        result.append({
+            "chain_id": chain_id,
+            "alias": conf.get("alias", chain_id),
+            "rpc_url": conf["rpc_url"]
+        })
+        processed_ids.add(chain_id)
+    
+    # 加载用户自定义 RPC（覆盖默认 RPC）
     if username:
         user = User.query.filter_by(username=username).first()
         if user:
             for rpc in user.rpcs:
-                cid_str = rpc.chain_id
-                user_rpc = {
+                cid_str = str(rpc.chain_id)
+                if cid_str in processed_ids:
+                    result = [r for r in result if r['chain_id'] != cid_str]
+                
+                result.append({
                     "chain_id": cid_str,
                     "alias": rpc.alias or cid_str,
                     "rpc_url": rpc.rpc_url
-                }
-                result.append(user_rpc) 
+                })
                 processed_ids.add(cid_str)
                 
     return create_response(data=result)
@@ -325,10 +362,10 @@ def get_rpcs_api():
 @login_required_or_token
 def add_rpc_api():
     """
-    娣诲姞RPC
+    添加RPC
     ---    
     tags:
-      - RPC绠＄悊
+      - RPC管理
     security:
       - api_key: []
     parameters:
@@ -343,19 +380,26 @@ def add_rpc_api():
           properties:
             chain_id:
               type: string
-              description: 閾綢D
+              description: 链ID
             rpc_url:
               type: string
               description: RPC URL
             alias:
               type: string
-              description: 閾惧埆鍚?    responses:
+              description: 链别名
+    responses:
       200:
-        description: 娣诲姞RPC鎴愬姛
+        description: 添加RPC成功
       400:
-        description: 鍙傛暟閿欒
+        description: 参数错误
       401:
         description: 鏈巿鏉?    """
+    tips={
+  "status": "error",
+  "message": "暂时不支持添加RPC",
+  "error": "NotSupported"
+}
+    return tips, 400
     data = request.json
     chain_id = str(data.get('chain_id'))
     rpc_url = data.get('rpc_url')
@@ -421,10 +465,10 @@ def add_rpc_api():
 @login_required_or_token
 def delete_rpc_api(chain_id):
     """
-    鍒犻櫎RPC
+    删除RPC
     ---    
     tags:
-      - RPC绠＄悊
+      - RPC管理
     security:
       - api_key: []
     parameters:
@@ -432,22 +476,24 @@ def delete_rpc_api(chain_id):
         in: path
         required: true
         type: string
-        description: 閾綢D
+        description: 链ID
     responses:
       200:
-        description: 鍒犻櫎RPC鎴愬姛
+        description: 删除RPC成功
       403:
-        description: 绯荤粺RPC绂佹鍒犻櫎
+        description: 系统RPC禁止删除
       404:
-        description: RPC鏈壘鍒?      401:
-        description: 鏈巿鏉?    """
+        description: RPC未找到
+      401:
+        description: 未授权
+    """
     chain_id_str = str(chain_id)
     
     username = g.user_username if hasattr(g, 'user_username') else None
     user = User.query.filter_by(username=username).first() if username else None
     
     if user:
-        # 鐩存帴鍒犻櫎鐢ㄦ埛鑷畾涔塕PC
+        # 直接删除用户自定义 RPC
         rpc = RpcConfig.query.filter_by(user_id=user.id, chain_id=chain_id_str).first()
         if rpc:
             db.session.delete(rpc)
@@ -458,20 +504,20 @@ def delete_rpc_api(chain_id):
 @config_bp.route('/api/public_key', methods=['GET'])
 def get_public_key():
     """
-    鑾峰彇RSA鍏挜
+    获取RSA公钥
     ---    
     tags:
-      - 鍏紑API
+      - 公开API
     responses:
       200:
-        description: 鑾峰彇鍏挜鎴愬姛
+        description: 获取公钥成功
         schema:
           type: object
           properties:
             public_key:
               type: string
-              description: Base64缂栫爜鐨凴SA鍏挜
+              description: Base64编码的RSA公钥
     """
-    # 鐢熸垚RSA瀵嗛挜瀵癸紙杩欓噷浣跨敤棰勫畾涔夌殑鍏挜锛屽疄闄呯敓浜х幆澧冨簲浠庨厤缃姞杞斤級
+    # 生成RSA密钥对（这里使用预定义的公钥，实际环境应从配置加载）
     public_key = "-----BEGIN PUBLIC KEY-----\nMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC8kGa1pSjbSYZVebtTRBLxBz5H\n4i2p/llLCrEeQhta5kaQu/RnvuER4W8oDH3+3iuIYW4VQAzyqFpwuzjkDI+17t5t\n0tyazyZ8JXw+KgXTxldMPEL95+qVhgXvwtihXC1c5oGbRlEDvDF6Sa53rcFVsYJ4\nehde/zUxo6UvS7UrBQIDAQAB\n-----END PUBLIC KEY-----"
     return create_response(data={"public_key": public_key})

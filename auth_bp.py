@@ -2,7 +2,7 @@ from flask import Blueprint, request, redirect, url_for, g
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import logout_user
 from extensions import db
-from models import User
+from models import User, RpcConfig
 from utils import create_response, login_required_or_token
 import secrets
 from datetime import datetime

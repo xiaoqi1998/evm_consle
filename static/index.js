@@ -1318,14 +1318,20 @@
 
         // 转义HTML特殊字符，防止XSS攻击
         function escapeHtml(text) {
+            if (text === null || text === undefined) {
+                return '';
+            }
             const div = document.createElement('div');
-            div.textContent = text;
+            div.textContent = String(text);
             return div.innerHTML;
         }
         
         // 转义HTML属性值，确保引号不会破坏属性结构
         function escapeHtmlAttribute(value) {
-            return value.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+            if (value === null || value === undefined) {
+                return '';
+            }
+            return String(value).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         }
 
         async function refreshConfigs() {

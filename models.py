@@ -21,7 +21,7 @@ class Account(db.Model):
 
 class RpcConfig(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     chain_id = db.Column(db.String(80), nullable=False)
     rpc_url = db.Column(db.String(200), nullable=False)
     alias = db.Column(db.String(80))
