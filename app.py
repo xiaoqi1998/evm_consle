@@ -37,6 +37,7 @@ from contract_bp import contract_bp
 from history_bp import history_bp
 from transaction_bp import transaction_bp
 from utils import login_required_or_token, validate_json_input, create_response
+from models import FeedbackLog
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_hex(32))
@@ -120,6 +121,27 @@ def docs():
         description: 文档页面
     """
     return render_template('docs.html')
+
+@app.route('/api/logs', methods=['POST'])
+def save_log():
+    """
+    保存反馈日志
+    ---    
+    tags:
+      - 反馈
+    responses:
+      200:
+        description: 日志保存成功
+    """
+    data = request.json
+    log = FeedbackLog(
+        type=data['type'],
+        message=data['message'],
+        context=data['context']
+    )
+    db.session.add(log)
+    db.session.commit()
+    return '', 200
 
 if __name__ == '__main__':
     app.run(debug=True,host='127.0.0.1', port=5002,)

@@ -49,3 +49,10 @@ class CallHistory(db.Model):
     chain_id = db.Column(db.String(80))
     abi_name = db.Column(db.String(80))
     user = db.relationship('User', backref=db.backref('history', lazy=True))
+
+class FeedbackLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    type = db.Column(db.String(20), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    context = db.Column(db.JSON)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)

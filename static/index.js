@@ -1,8 +1,8 @@
-﻿
+
         // ==========================================
         // 0. 导入依赖
         // ==========================================
-        console.log('版本V1.0.5，更新日期2026-03-09 10:17');
+        console.log('版本V1.0.7，更新日期2026-03-10 13:10');
         
         // 导入 ethers.js v6
         if (typeof ethers === 'undefined') {
@@ -40,6 +40,71 @@
         }
         
         // ==========================================
+        // 0. 反馈日志系统
+        // ==========================================
+        async function report(type, message, extraContext = {}) {
+            const payload = {
+                type: type,
+                message: message,
+                context: {
+                    url: window.location.href,
+                    chain: document.getElementById('select-chain')?.value || 'unknown',
+                    account: typeof metamaskAccount !== 'undefined' ? metamaskAccount : 'none',
+                    ...extraContext
+                }
+            };
+            
+            // 静默发送，不阻碍用户
+            fetch('/api/logs', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            }).catch(() => {});
+        }
+
+        // 自动捕获 JavaScript 错误（更健壮的实现）
+        const originalOnError = window.onerror;
+        window.onerror = function(msg, url, line, col, error) {
+            console.log('捕获到JavaScript错误:', msg, url, line);
+            report('AUTO_ERROR', `${msg} at ${line}:${col}`);
+            
+            // 调用原有的错误处理（如果有）
+            if (typeof originalOnError === 'function') {
+                return originalOnError(msg, url, line, col, error);
+            }
+            return false; // 允许错误继续传播
+        };
+
+        // 捕获未处理的Promise拒绝
+        window.addEventListener('unhandledrejection', function(event) {
+            console.log('捕获到未处理的Promise拒绝:', event.reason);
+            report('PROMISE_ERROR', `Unhandled promise rejection: ${event.reason}`);
+        });
+
+        // 测试函数（开发阶段使用）
+        window.testFeedbackSystem = function() {
+            console.log('测试反馈系统...');
+            
+            // 测试手动反馈
+            report('USER_FEEDBACK', '这是手动测试反馈');
+            
+            // 测试API错误
+            fetch('/api/nonexistent').catch(() => {});
+            
+            // 测试JavaScript错误
+            setTimeout(() => {
+                try {
+                    // 故意触发一个错误
+                    undefinedFunction();
+                } catch(e) {
+                    console.log('故意触发的错误已被捕获');
+                }
+            }, 100);
+            
+            alert('测试已触发，请检查控制台和数据库');
+        };
+
+        // ==========================================
         // 0. API Token 拦截器
         // ==========================================
         const originalFetch = window.fetch;
@@ -76,6 +141,11 @@
                 }
             }
             const res = await originalFetch(...args);
+            
+            // 记录 API 错误
+            if (!res.ok) {
+                report('API_ERROR', `HTTP ${res.status} on ${url}`);
+            }
             
             // 401 处理：排除登录、注册和用户信息接口
             if (res.status === 401) {
@@ -1538,7 +1608,7 @@
                     const resultColor = h.error ? 'text-danger' : 'text-success';
                     resultCell.className = resultColor;
                     
-                    const resultText = h.error ? h.error : (h.type === 'read' ? JSON.stringify(h.result, null, 2) : `TX Hash: ${h.result.tx_hash}`);
+                    const resultText = h.error ? h.error : (h.type === 'read' ? JSON.stringify(h.result, null, 2) : (h.result && h.result.transaction_hash ? `TX Hash: ${h.result.transaction_hash}` : JSON.stringify(h.result, null, 2)));
                     
                     const resultToggle = document.createElement('div');
                     resultToggle.className = 'toggle-btn';
@@ -1769,12 +1839,17 @@
                         // 调试：显示获取的ABI信息
                         console.log('ABI获取成功，ABI长度:', abiData.data.full_abi.length);
                         
-                        // 创建合约实例
-                        const contract = new ethers.Contract(addr, abiData.data.full_abi, metamaskSigner);
+                        // 创建合约实例 - ethers v6 兼容性修复
+                        // 1. 确保 ABI 是 Array 格式
+                        const rawAbi = abiData.data.full_abi;
+                        const parsedAbi = typeof rawAbi === 'string' ? JSON.parse(rawAbi) : rawAbi;
+                        
+                        // 2. 使用 v6 语法实例化 (address 属性在 v6 中变为 target)
+                        const contract = new ethers.Contract(addr, parsedAbi, metamaskSigner);
                         
                         // 调试：显示合约实例和可用方法
-                        console.log('合约实例创建成功:', contract.address);
-                        console.log('合约可用方法:', Object.keys(contract.functions));
+                        console.log('合约实例创建成功:', contract.target); // v6 使用 target
+                        console.log('合约可用方法:', contract.interface ? contract.interface.fragments.filter(f => f.type === 'function').map(f => f.name) : 'interface 属性不存在');
                         
                         // 调试：显示当前选择的方法
                         console.log('当前选择的方法:', currentSelectedMethod.name);
@@ -1819,19 +1894,23 @@
                             const methodName = currentSelectedMethod.name;
                             const paramCount = metaMaskInps.length;
                             
-                            // 遍历所有合约函数签名，找到匹配函数名和参数数量的签名
-                            for (const sig of Object.keys(contract.interface.functions)) {
-                                const func = contract.interface.functions[sig];
-                                // 检查是否以方法名加 ( 开头
-                                if (sig.startsWith(`${methodName}(`)) {
-                                    // 获取该签名对应的输入参数数量
-                                    const inputCount = func.inputs.length;
+                            // 遍历所有合约函数签名，找到匹配函数名和参数数量的签名 - ethers v6 兼容性修复
+                            const fragments = contract.interface?.fragments;
+                            if (!fragments) {
+                                throw new Error('合约接口 fragments 属性不存在');
+                            }
+                            
+                            for (const fragment of fragments) {
+                                // 只处理 function 类型且名称匹配
+                                if (fragment.type === 'function' && fragment.name === methodName) {
+                                    // 获取该函数对应的输入参数数量
+                                    const inputCount = fragment.inputs.length;
                                     // 检查参数数量是否匹配
                                     if (inputCount === paramCount) {
                                         // 【深度校验】：如果参数数量相同，通过判断用户输入的是否为数组来匹配 ABI 中的 tuple 或 array 类型
                                         let isMatch = true;
                                         for (let i = 0; i < inputCount; i++) {
-                                            const abiType = func.inputs[i].type;
+                                            const abiType = fragment.inputs[i].type;
                                             const userInput = metaMaskInps[i];
                                             // 如果 ABI 中是 tuple 或 array 类型，而用户输入不是数组，则不匹配
                                             if ((abiType.startsWith('tuple') || abiType.endsWith('[]')) && !Array.isArray(userInput)) {
@@ -1845,8 +1924,8 @@
                                             }
                                         }
                                         if (isMatch) {
-                                            foundSignature = sig;
-                                            console.log('找到匹配的函数签名:', sig);
+                                            foundSignature = fragment.format(); // 获取完整签名，例如 "transfer(address,uint256)"
+                                            console.log('找到匹配的函数签名:', foundSignature);
                                             break;
                                         }
                                     }
@@ -1857,8 +1936,9 @@
                                 throw new Error('未找到匹配参数数量的重载版本');
                             }
                             
-                            // 使用完整的函数签名来调用合约方法
-                            const tx = await contract[foundSignature](...metaMaskInps, { value, gasLimit: 1000000 });
+                            // 使用完整的函数签名来调用合约方法 - 解决重载问题
+                            // 必须使用完整的带参数签名字符串，例如 "bridgeToken(address,uint256[],bytes32,bytes32,uint256,uint256)"
+                            const tx = await contract.getFunction(foundSignature)(...metaMaskInps, { value, gasLimit: 1000000 });
                             
                             // 等待交易确认
                             showToast('交易已提交，等待确认...', 'info');
