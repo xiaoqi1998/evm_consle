@@ -7,6 +7,7 @@ class User(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     token = db.Column(db.String(120), unique=True)
+    token_expires_at = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_disabled = db.Column(db.Boolean, default=False)
     risk_accepted_at = db.Column(db.DateTime)

@@ -14,7 +14,7 @@ import config as global_config
 from werkzeug.utils import secure_filename
 import time
 import random
-from flask_login import logout_user
+from flask_login import logout_user, user_needs_refresh
 import base64
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -122,4 +122,4 @@ def docs():
     return render_template('docs.html')
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5002)
+    app.run(debug=True,host='127.0.0.1', port=5002,)

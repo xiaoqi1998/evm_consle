@@ -1,4 +1,4 @@
-﻿import ipaddress
+import ipaddress
 import json
 import socket
 import time
@@ -324,6 +324,12 @@ def login_required_or_token(f):
             if user:
                 if user.is_disabled:
                     return create_response(status_code=403, error="AccountDisabled", details="Account is disabled.")
+                
+                # 检查 Token 是否过期
+                from datetime import datetime
+                if user.token_expires_at and datetime.utcnow() > user.token_expires_at:
+                    return create_response(status_code=401, error="TokenExpired", details="Token has expired. Please login again.")
+                
                 g.user_username = user.username
                 return f(*args, **kwargs)
 
