@@ -4,7 +4,7 @@
 # 可以在此处直接更新 RPC 地址，全站立即生效
 # 测试链 RPC 配置（建议仅在测试链上使用）
 GLOBAL_DEFAULT_RPCS = [
-    {"chain_id": "11155111", "alias": "Sepolia (Ethereum)", "rpc_url": "https://sepolia.infura.io/v3/"},
+    {"chain_id": "11155111", "alias": "Sepolia (Ethereum)", "rpc_url": "https://sepolia.infura.io/v3/cb1d33116ae74dbc8cd42218bd0ad026"},
     {"chain_id": "11155111", "alias": "Sepolia-Public", "rpc_url": "https://ethereum-sepolia.publicnode.com"},
     {"chain_id": "97", "alias": "BSC Testnet", "rpc_url": "https://data-seed-prebsc-1-s1.binance.org:8545/"},
     {"chain_id": "80002", "alias": "Polygon Amoy", "rpc_url": "https://rpc-amoy.polygon.technology"},

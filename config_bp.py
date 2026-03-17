@@ -1,4 +1,4 @@
-﻿from flask import Blueprint, request, g
+from flask import Blueprint, request, g
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import logout_user
 from extensions import db
@@ -261,6 +261,68 @@ def save_account():
         acc.pk_slice_server = pk_slice_server
         db.session.commit()
         return create_response(message="Account slice saved to server")
+    return create_response(message="User not found", status_code=404)
+
+@config_bp.route('/api/accounts/<alias>', methods=['PUT'])
+@login_required_or_token
+def update_account(alias):
+    """
+    更新账户信息
+    ---    
+    tags:
+      - 账户管理
+    security:
+      - api_key: []
+    parameters:
+      - name: alias
+        in: path
+        required: true
+        type: string
+        description: 账户别名
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          properties:
+            address:
+              type: string
+              description: 账户地址
+            pk_slice_server:
+              type: string
+              description: 服务器存储的私钥分片
+    responses:
+      200:
+        description: 更新账户成功
+      400:
+        description: 参数错误
+      404:
+        description: 账户未找到
+      401:
+        description: 未授权
+    """
+    data = request.json
+    address = data.get('address')
+    pk_slice_server = data.get('pk_slice_server')
+    
+    username = g.user_username
+    user = User.query.filter_by(username=username).first()
+    
+    if user:
+        acc = Account.query.filter_by(user_id=user.id, alias=alias).first()
+        if not acc:
+            return create_response(error="AccountNotFound", details=f"Account alias '{alias}' not found.", status_code=404)
+        
+        # 更新地址（如果提供）
+        if address is not None:
+            acc.address = address
+        
+        # 更新服务器分片（如果提供）
+        if pk_slice_server is not None:
+            acc.pk_slice_server = pk_slice_server
+        
+        db.session.commit()
+        return create_response(message="Account updated successfully")
     return create_response(message="User not found", status_code=404)
 
 @config_bp.route('/api/accounts/<alias>', methods=['DELETE'])

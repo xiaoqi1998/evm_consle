@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>二维码密保体系测试</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8fafc;
+            font-family: 'Inter', -apple-system, sans-serif;
+            padding: 2rem;
+        }
+        .test-section {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+        .qr-preview {
+            text-align: center;
+            padding: 2rem;
+            background: #f1f5f9;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+        .qr-image {
+            max-width: 300px;
+            max-height: 300px;
+        }
+        .info-box {
+            background: #eef2ff;
+            border-left: 4px solid #4f46e5;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mb-4"><i class="bi bi-qrcode me-2"></i>二维码密保体系测试</h1>
+        
+        <!-- 测试备份功能 -->
+        <div class="test-section">
+            <h2><i class="bi bi-camera me-2"></i>测试备份功能</h2>
+            
+            <div class="info-box">
+                <h5>测试数据：</h5>
+                <ul class="mb-0">
+                    <li>账户别名：testAccount</li>
+                    <li>切片 C：3-abc123def456...</li>
+                    <li>账户地址：0x742d35Cc6634C0532925a3b844Bc454e4438f44e</li>
+                </ul>
+            </div>
+            
+            <div class="d-grid gap-2">
+                <button class="btn btn-primary btn-lg" onclick="testGenerateBackup()">
+                    <i class="bi bi-plus-circle me-2"></i>生成密保二维码
+                </button>
+            </div>
+            
+            <div id="backup-result" class="mt-4"></div>
+        </div>
+        
+        <!-- 测试恢复功能 -->
+        <div class="test-section">
+            <h2><i class="bi bi-barcode me-2"></i>测试恢复功能</h2>
+            
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <h5>PC端：上传图片识别</h5>
+                    <div class="mb-3">
+                        <input type="file" id="qr-file-input" accept="image/png,image/jpeg" class="form-control">
+                    </div>
+                    <button class="btn btn-success" onclick="testScanImage()">
+                        <i class="bi bi-upload me-2"></i>上传并识别
+                    </button>
+                </div>
+                
+                <div class="col-md-6">
+                    <h5>手机端：摄像头扫码</h5>
+                    <button class="btn btn-info" onclick="testScanCamera()">
+                        <i class="bi bi-camera me-2"></i>开启摄像头
+                    </button>
+                </div>
+            </div>
+            
+            <div id="recovery-result" class="mt-4"></div>
+        </div>
+        
+        <!-- 技术说明 -->
+        <div class="test-section">
+            <h2><i class="bi bi-info-circle me-2"></i>技术说明</h2>
+            
+            <div class="mb-4">
+                <h5>1. 二维码生成</h5>
+                <p>使用 <code>qrcode.js</code> 库在前端生成二维码，数据格式：</p>
+                <pre class="bg-dark text-light p-3 rounded">{ "v": 1, "a": "账户别名", "s": "切片 C 内容" }</pre>
+            </div>
+            
+            <div class="mb-4">
+                <h5>2. PC端识别</h5>
+                <p>使用 <code>jsQR</code> 库解析上传的二维码图片：</p>
+                <ul>
+                    <li>通过 FileReader 读取图片文件</li>
+                    <li>将图片绘制到 canvas</li>
+                    <li>使用 jsQR 解析二维码数据</li>
+                </ul>
+            </div>
+            
+            <div class="mb-4">
+                <h5>3. 手机端扫码</h5>
+                <p>使用 <code>html5-qrcode</code> 库调用摄像头：</p>
+                <ul>
+                    <li>请求摄像头权限</li>
+                    <li>实时扫描视频流</li>
+                    <li>识别二维码并返回数据</li>
+                </ul>
+            </div>
+            
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                <strong>重要：</strong>所有二维码生成和解析逻辑都在前端完成，绝不会将切片 C 发送到服务器。
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入依赖库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+    <script src="/static/js/qrcode-utils.js"></script>
+    
+    <script>
+        // 测试备份功能
+        async function testGenerateBackup() {
+            const alias = 'testAccount';
+            const sliceC = '3-abc123def4567890abcdef1234567890abcdef1234567890abcdef1234567890';
+            const address = '0x742d35Cc6634C0532925a3b844Bc454e4438f44e';
+            
+            try {
+                const cardHTML = await QRGenerator.generateBackupCard(alias, sliceC, address);
+                document.getElementById('backup-result').innerHTML = `
+                    <div class="qr-preview">
+                        ${cardHTML}
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-secondary" onclick="QRGenerator.downloadBackupImage('${alias}')">
+                            <i class="bi bi-download me-2"></i>下载密保图片
+                        </button>
+                    </div>
+                `;
+                
+                showToast('二维码生成成功！', 'success');
+            } catch (error) {
+                console.error('生成失败:', error);
+                showToast('生成失败：' + error.message, 'danger');
+            }
+        }
+        
+        // 测试图片识别
+        async function testScanImage() {
+            const fileInput = document.getElementById('qr-file-input');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showToast('请先选择二维码图片', 'warning');
+                return;
+            }
+            
+            try {
+                const qrData = await QRScanner.scanImageFromFile(file);
+                const parsed = QRScanner.parseQRData(qrData);
+                
+                document.getElementById('recovery-result').innerHTML = `
+                    <div class="alert alert-success">
+                        <i class="bi bi-check-circle me-2"></i>
+                        <strong>识别成功！</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>版本：${parsed.version}</li>
+                            <li>账户别名：${parsed.alias}</li>
+                            <li>切片 C：${parsed.sliceC.substring(0, 20)}...</li>
+                        </ul>
+                    </div>
+                `;
+                
+                console.log('解析结果:', parsed);
+            } catch (error) {
+                console.error('识别失败:', error);
+                document.getElementById('recovery-result').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="bi bi-x-circle me-2"></i>
+                        <strong>识别失败：</strong>${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        // 测试摄像头扫码
+        async function testScanCamera() {
+            try {
+                const qrData = await QRScanner.scanWithCamera();
+                const parsed = QRScanner.parseQRData(qrData);
+                
+                document.getElementById('recovery-result').innerHTML = `
+                    <div class="alert alert-success">
+                        <i class="bi bi-check-circle me-2"></i>
+                        <strong>扫码成功！</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>版本：${parsed.version}</li>
+                            <li>账户别名：${parsed.alias}</li>
+                            <li>切片 C：${parsed.sliceC.substring(0, 20)}...</li>
+                        </ul>
+                    </div>
+                `;
+                
+                console.log('解析结果:', parsed);
+            } catch (error) {
+                console.error('扫码失败:', error);
+                document.getElementById('recovery-result').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="bi bi-x-circle me-2"></i>
+                        <strong>扫码失败：</strong>${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        // Toast 提示
+        function showToast(message, type = 'info') {
+            const toastContainer = document.createElement('div');
+            toastContainer.className = 'position-fixed bottom-0 end-0 p-3';
+            toastContainer.innerHTML = `
+                <div class="toast align-items-center text-white bg-${type === 'success' ? 'success' : type === 'danger' ? 'danger' : 'primary'} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(toastContainer);
+            
+            const toast = new bootstrap.Toast(toastContainer.querySelector('.toast'));
+            toast.show();
+            
+            setTimeout(() => {
+                toastContainer.remove();
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

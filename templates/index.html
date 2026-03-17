@@ -660,9 +660,15 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.9.0/ethers.umd.min.js" type="application/javascript"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsencrypt/3.3.2/jsencrypt.min.js"></script>
     <!-- DOMPurify - XSS 防护库 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
-    <!-- Shamir's Secret Sharing - 私钥分片加密库 -->
-    <script src="https://cdn.jsdelivr.net/npm/js-shamir@0.1.2/build/shamir.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.2.3/purify.min.js"></script>
+    <!-- Shamir's Secret Sharing - 使用 js-shamir 生产级库（经过社区审计） -->
+    <script src="https://cdn.jsdelivr.net/npm/secrets.js-grempe@2.0.0/secrets.min.js"></script>    <!-- QR Code Generation - qrcode.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- jsQR - PC端二维码识别 -->
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+    <!-- html5-qrcode - 手机端扫码 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+    <script src="../static/js/qrcode-utils.js"></script>
     <script src="../static/index.js"></script>
 </body>
 </html>

@@ -1214,7 +1214,12 @@
                     // 服务器保存成功后，加密保存本地分片
                     try {
                         await SecureStorage.saveEncryptedSlice(alias, sliceB, password);
-                        showToast('账户保存成功（分片已加密存储）', 'success');
+                        
+                        // 生成二维码密保
+                        const sliceC = slices[2];
+                        await generateAndShowQRBackup(alias, sliceC, address);
+                        
+                        showToast('账户保存成功（分片已加密存储，密保二维码已生成）', 'success');
                     } catch (encryptError) {
                         console.error('加密分片失败:', encryptError);
                         showToast('加密分片失败：' + encryptError.message, 'danger');
@@ -1234,6 +1239,79 @@
             } catch (error) {
                 console.error('保存账户时出错:', error);
                 showToast('保存失败：' + error.message, 'danger');
+            }
+        }
+
+        async function generateAndShowQRBackup(alias, sliceC, accountAddress) {
+            try {
+                const cardHTML = await QRGenerator.generateBackupCard(alias, sliceC, accountAddress);
+                
+                const modalDiv = document.createElement('div');
+                modalDiv.innerHTML = `
+                    <div class="modal fade" id="qrBackupModal" tabindex="-1" aria-labelledby="qrBackupModalLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="qrBackupModalLabel">
+                                        <i class="bi bi-shield-lock me-2"></i>保存您的"密保二维码"
+                                    </h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="alert alert-danger" role="alert">
+                                        <h6><i class="bi bi-exclamation-triangle me-2"></i>重要安全警告</h6>
+                                        <p class="mb-2"><strong>这是恢复该账户的唯一凭证。</strong>当您更换设备或清空浏览器数据时，必须使用此码找回资产。</p>
+                                        <p class="mb-0"><strong class="text-danger">请勿将此二维码存入手机相册或云端。</strong>建议直接打印，或存入物理加密U盘。一旦此码泄露，黑客在获取您的登录权限后可直接盗取资金。</p>
+                                    </div>
+                                    <div id="qr-backup-container" class="text-center p-4 bg-light rounded">
+                                        ${cardHTML}
+                                    </div>
+                                    <div class="mt-4 text-center">
+                                        <p class="text-muted small">请仔细核对以下信息：</p>
+                                        <ul class="list-unstyled text-start d-inline-block">
+                                            <li class="mb-2"><strong>账户别名：</strong> ${alias}</li>
+                                            <li class="mb-2"><strong>账户地址：</strong> ${accountAddress || '未提供'}</li>
+                                            <li class="mb-2"><strong>切片类型：</strong> 切片 C (密码)</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" onclick="downloadQRBackup('${alias}')">
+                                        <i class="bi bi-download me-2"></i>下载密保图片
+                                    </button>
+                                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal" onclick="confirmQRBackup('${alias}')">
+                                        <i class="bi bi-check-circle me-2"></i>我已离线保存，下一步
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modalDiv);
+                
+                const modal = new bootstrap.Modal(modalDiv.querySelector('.modal'));
+                modal.show();
+                
+                window.downloadQRBackup = function(alias) {
+                    QRGenerator.downloadBackupImage(alias);
+                };
+                
+                window.confirmQRBackup = function(alias) {
+                    console.log(`用户已确认保存密保二维码 for account: ${alias}`);
+                };
+                
+                modalDiv.addEventListener('hidden.bs.modal', () => {
+                    if (modalDiv.parentNode) {
+                        modalDiv.parentNode.removeChild(modalDiv);
+                    }
+                    delete window.downloadQRBackup;
+                    delete window.confirmQRBackup;
+                });
+                
+            } catch (error) {
+                console.error('生成二维码失败:', error);
+                throw new Error('生成密保二维码失败：' + error.message);
             }
         }
 
@@ -1465,12 +1543,24 @@
                         
                         li.appendChild(span);
                         
+                        const actionsDiv = document.createElement('div');
+                        actionsDiv.className = 'd-flex gap-2';
+                        
+                        const restoreBtn = document.createElement('button');
+                        restoreBtn.className = 'btn btn-sm btn-outline-primary';
+                        restoreBtn.innerHTML = '<i class="bi bi-qrcode me-1"></i>恢复';
+                        restoreBtn.title = '扫码恢复账户';
+                        restoreBtn.onclick = function() { restoreAccountWithQR(acc); };
+                        actionsDiv.appendChild(restoreBtn);
+                        
                         const button = document.createElement('button');
                         button.className = 'btn btn-sm text-danger';
                         button.dataset.account = acc;
                         button.textContent = '×';
                         button.onclick = function() { deleteAccount(this.dataset.account); };
-                        li.appendChild(button);
+                        actionsDiv.appendChild(button);
+                        
+                        li.appendChild(actionsDiv);
                         
                         document.getElementById('account-list').appendChild(li);
                     });
@@ -1535,6 +1625,193 @@
                 } 
             } 
         }
+        
+        async function restoreAccountWithQR(alias) {
+            try {
+                const result = await showQRRecoveryModal(alias);
+                
+                if (!result) return;
+                
+                const { sliceC, password } = result;
+                
+                // 1. 获取服务器切片 A
+                const accountData = await fetch(`/api/accounts/${alias}`).then(res => res.json());
+                if (accountData.status !== 'success') {
+                    throw new Error(accountData.error || '获取账户信息失败');
+                }
+                
+                const sliceA = accountData.data.pk_slice_server;
+                
+                // 2. 使用 Shamir 算法合并切片：A + C = 私钥
+                const privateKey = Shamir.combine([sliceA, sliceC]);
+                
+                // 3. 重新生成分片（3 取 2）
+                const cleanPrivateKey = privateKey.startsWith('0x') ? privateKey.slice(2) : privateKey;
+                const newSlices = Shamir.share(cleanPrivateKey, 3, 2);
+                const newSliceA = newSlices[0];
+                const newSliceB = newSlices[1];
+                
+                // 4. 更新服务器切片 A
+                const updateRes = await fetch(`/api/accounts/${alias}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pk_slice_server: newSliceA })
+                });
+                
+                if (!updateRes.ok) {
+                    throw new Error('更新服务器切片失败');
+                }
+                
+                // 5. 加密保存本地切片 B
+                await SecureStorage.saveEncryptedSlice(alias, newSliceB, password);
+                
+                alert('账户恢复成功！请重新设置交易密码。');
+                refreshConfigs();
+                
+            } catch (error) {
+                console.error('恢复账户失败:', error);
+                alert('恢复失败：' + error.message);
+            }
+        }
+        
+        async function showQRRecoveryModal(alias) {
+            return new Promise((resolve) => {
+                const modalDiv = document.createElement('div');
+                modalDiv.innerHTML = `
+                    <div class="modal fade" id="qrRecoveryModal" tabindex="-1" aria-labelledby="qrRecoveryModalLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="qrRecoveryModalLabel">
+                                        <i class="bi bi-qrcode me-2"></i>扫码恢复资产
+                                    </h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="alert alert-info" role="alert">
+                                        <i class="bi bi-info-circle me-2"></i>
+                                        <strong>引导文案：</strong>检测到本地安全分片缺失。请上传或扫描该账户的"密保二维码"以重新激活。
+                                    </div>
+                                    
+                                    <div class="card mb-3">
+                                        <div class="card-header bg-primary text-white">
+                                            <i class="bi bi-qr-code me-2"></i>选择恢复方式
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="d-grid gap-2">
+                                                <button class="btn btn-outline-primary" onclick="restoreWithUpload('${alias}')">
+                                                    <i class="bi bi-upload me-2"></i>点击上传二维码图片
+                                                </button>
+                                                <button class="btn btn-outline-success" onclick="restoreWithCamera('${alias}')">
+                                                    <i class="bi bi-camera me-2"></i>开启摄像头扫码
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div id="recovery-status" class="alert alert-secondary d-none" role="alert">
+                                        <i class="bi bi-hourglass-split me-2"></i>等待操作...
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modalDiv);
+                
+                const modal = new bootstrap.Modal(modalDiv.querySelector('.modal'));
+                modal.show();
+                
+                window.restoreWithUpload = function(accountAlias) {
+                    document.getElementById('recovery-status').classList.remove('d-none');
+                    document.getElementById('recovery-status').innerHTML = '<i class="bi bi-hourglass-split me-2"></i>等待上传二维码图片...';
+                    
+                    const fileInput = document.createElement('input');
+                    fileInput.type = 'file';
+                    fileInput.accept = 'image/png,image/jpeg';
+                    fileInput.onchange = async (e) => {
+                        const file = e.target.files[0];
+                        if (!file) return;
+                        
+                        try {
+                            const qrData = await QRScanner.scanImageFromFile(file);
+                            const parsed = QRScanner.parseQRData(qrData);
+                            
+                            if (parsed.alias !== accountAlias) {
+                                alert('二维码中的账户别名不匹配！');
+                                return;
+                            }
+                            
+                            document.getElementById('recovery-status').classList.remove('alert-secondary');
+                            document.getElementById('recovery-status').classList.add('alert-success');
+                            document.getElementById('recovery-status').innerHTML = '<i class="bi bi-check-circle me-2"></i>解析成功，正在连接服务器同步分片 A...';
+                            
+                            setTimeout(() => {
+                                modal.hide();
+                                modalDiv.remove();
+                                delete window.restoreWithUpload;
+                                delete window.restoreWithCamera;
+                                resolve({ sliceC: parsed.sliceC, password: null });
+                            }, 1000);
+                            
+                        } catch (error) {
+                            document.getElementById('recovery-status').classList.remove('alert-secondary');
+                            document.getElementById('recovery-status').classList.add('alert-danger');
+                            document.getElementById('recovery-status').innerHTML = `<i class="bi bi-x-circle me-2"></i>错误：${error.message}`;
+                            console.error('扫码失败:', error);
+                        }
+                    };
+                    
+                    fileInput.click();
+                };
+                
+                window.restoreWithCamera = function(accountAlias) {
+                    document.getElementById('recovery-status').classList.remove('d-none');
+                    document.getElementById('recovery-status').innerHTML = '<i class="bi bi-hourglass-split me-2"></i>初始化摄像头...';
+                    
+                    setTimeout(async () => {
+                        try {
+                            const qrData = await QRScanner.scanWithCamera();
+                            const parsed = QRScanner.parseQRData(qrData);
+                            
+                            if (parsed.alias !== accountAlias) {
+                                alert('二维码中的账户别名不匹配！');
+                                return;
+                            }
+                            
+                            document.getElementById('recovery-status').classList.remove('alert-secondary');
+                            document.getElementById('recovery-status').classList.add('alert-success');
+                            document.getElementById('recovery-status').innerHTML = '<i class="bi bi-check-circle me-2"></i>解析成功，正在连接服务器同步分片 A...';
+                            
+                            setTimeout(() => {
+                                modal.hide();
+                                modalDiv.remove();
+                                delete window.restoreWithUpload;
+                                delete window.restoreWithCamera;
+                                resolve({ sliceC: parsed.sliceC, password: null });
+                            }, 1000);
+                            
+                        } catch (error) {
+                            document.getElementById('recovery-status').classList.remove('alert-secondary');
+                            document.getElementById('recovery-status').classList.add('alert-danger');
+                            document.getElementById('recovery-status').innerHTML = `<i class="bi bi-x-circle me-2"></i>错误：${error.message}`;
+                            console.error('摄像头扫码失败:', error);
+                        }
+                    }, 500);
+                };
+                
+                modalDiv.addEventListener('hidden.bs.modal', () => {
+                    if (modalDiv.parentNode) {
+                        modalDiv.parentNode.removeChild(modalDiv);
+                    }
+                    delete window.restoreWithUpload;
+                    delete window.restoreWithCamera;
+                    resolve(null);
+                });
+            });
+        }
+        
         async function deleteRpc(id) { if(confirm('Delete?')) { const res = await fetch(`/api/rpcs/${id}`, {method:'DELETE'}); if(res.ok) { refreshConfigs(); showToast('RPC Deleted', 'success'); } else showToast('Delete failed', 'danger'); } }
 
         async function clearCallHistory() {
@@ -1807,6 +2084,12 @@
                 const abi = document.getElementById('select-abi').value;
                 const cid = document.getElementById('select-chain').value;
                 const inps = Array.from(document.querySelectorAll('.m-inp')).map(i => parseInputValue(i.value, i.dataset.type));
+                
+                if (!currentSelectedMethod) {
+                    showToast('请先选择一个方法', 'danger');
+                    throw new Error('请先选择一个方法');
+                }
+                
                 const isRead = currentSelectedMethod.stateMutability === 'view' || currentSelectedMethod.stateMutability === 'pure';
                 
                 if (!cid) {
@@ -1938,15 +2221,19 @@
                             
                             // 使用完整的函数签名来调用合约方法 - 解决重载问题
                             // 必须使用完整的带参数签名字符串，例如 "bridgeToken(address,uint256[],bytes32,bytes32,uint256,uint256)"
-                            const tx = await contract.getFunction(foundSignature)(...metaMaskInps, { value, gasLimit: 1000000 });
-                            
-                            // 等待交易确认
+                           const gasLimit = await contract.getFunction(foundSignature).estimateGas(...metaMaskInps, { value });
+// 真正执行
+                            const tx = await contract.getFunction(foundSignature)(...metaMaskInps, { value, gasLimit });
+
+                            // 2. 【核心优化】立即提示用户，不要等！
+                            // 这样用户能立刻看到 TX Hash，知道程序没卡死
                             showToast('交易已提交，等待确认...', 'info');
                             console.log('交易已提交，tx hash:', tx.hash);
-                            
-                            const receipt = await tx.wait();
-                            
-                            // 显示结果
+
+                            // 3. 开始等待链上确认（这行代码会阻塞后续运行，直到出块）
+                            const receipt = await tx.wait(); 
+
+                            // 4. 交易确认后的逻辑
                             resBox.innerText = JSON.stringify(receipt, null, 2);
                             showToast('交易已确认', 'success');
                         } catch (error) {
@@ -1960,7 +2247,12 @@
                     }
                 } else {
                     // 后端 API 调用逻辑
-                    const body = { contract_address:addr, abi_name:abi, method_name:currentSelectedMethod.name, args:inps };
+                    const body = { 
+                        contract_address:addr, 
+                        abi_name:abi, 
+                        method_name:currentSelectedMethod.name, 
+                        args:inps || [] 
+                    };
                     if(!isNaN(cid)) body.chain_id = parseInt(cid); else body.chain_alias = cid;
                     if(!isRead) { 
                         body.account_alias = selectedAccount; 

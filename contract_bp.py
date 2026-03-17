@@ -239,6 +239,13 @@ def read_contract():
     method_name = data.get('method_name')
     args = data.get('args', [])
     
+    if not contract_address:
+        return create_response(error="Missing parameter", details="contract_address is required", status_code=400)
+    if not abi_name:
+        return create_response(error="Missing parameter", details="abi_name is required", status_code=400)
+    if not method_name:
+        return create_response(error="Missing parameter", details="method_name is required", status_code=400)
+    
     if not w3.is_address(contract_address):
         return create_response(error="Invalid contract_address format", details=f"Provided contract_address '{contract_address}' is not a valid Ethereum address."), 400
 
@@ -441,7 +448,21 @@ def write_contract():
     
     # 提前获取参数，用于无论成功失败都保存历史
     raw_transaction = data.get('raw_transaction')
+    contract_address = data.get('contract_address')
+    method_name = data.get('method_name')
+    args = data.get('args')
+    abi_name = data.get('abi_name')
     username = get_current_username()
+
+    # 验证必需参数
+    if not raw_transaction:
+        return create_response(error="Missing parameter", details="raw_transaction is required", status_code=400)
+    if not contract_address:
+        return create_response(error="Missing parameter", details="contract_address is required", status_code=400)
+    if not method_name:
+        return create_response(error="Missing parameter", details="method_name is required", status_code=400)
+    if not abi_name:
+        return create_response(error="Missing parameter", details="abi_name is required", status_code=400)
 
     # 1. 确定 Web3 实例
     w3, rpc_url, error_res = get_web3_instance(data)
@@ -467,8 +488,8 @@ def write_contract():
         
         # --- 成功记录历史 ---
         if username:
-            save_call_history(username, 'write', None, None, None, 
-                              result={"transaction_hash": tx_hash.hex()})
+            save_call_history(username, 'write', contract_address, method_name, args, 
+                              result={"transaction_hash": tx_hash.hex()}, chain_id=data.get('chain_id'), abi_name=abi_name)
             
         return create_response(data={"transaction_hash": tx_hash.hex()}), 200
 
@@ -476,8 +497,8 @@ def write_contract():
         current_app.logger.error(f"写入合约出错: {str(e)}", exc_info=True)
         # --- 失败也要记录历史 (重点修正) ---
         if username:
-            save_call_history(username, 'write', None, None, None, 
-                              error=str(e))
+            save_call_history(username, 'write', contract_address, method_name, args, 
+                              error=str(e), chain_id=data.get('chain_id'), abi_name=abi_name)
         return create_response(error="Failed to write contract", details=str(e)), 500
 
 

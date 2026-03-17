@@ -174,6 +174,7 @@
                         <ul class="list-unstyled">
                             <li><a href="#overview" class="toc-link" data-i18n="overview">安全机制概述</a></li>
                             <li><a href="#shamir" class="toc-link" data-i18n="shamir">Shamir's Secret Sharing</a></li>
+                            <li><a href="#qr-backup" class="toc-link">二维码密保体系</a></li>
                             <li><a href="#encryption" class="toc-link" data-i18n="encryption">AES-256-GCM 加密</a></li>
                             <li><a href="#secure-storage" class="toc-link" data-i18n="secure_storage">SecureStorage 模块</a></li>
                             <li><a href="#source-code" class="toc-link" data-i18n="source_code">开源代码展示</a></li>
@@ -295,6 +296,84 @@ const shares = Shamir.share(privateKey, 3, 2);
 // 还原私钥（需要至少 2 个片段）
 const combined = Shamir.combine(["1-abc...", "2-def..."]);
 // combined = "0x1234567890abcdef..."</code></pre>
+                    </div>
+                </div>
+
+                <!-- QR Code Backup System -->
+                <div id="qr-backup" class="card mb-4 section">
+                    <div class="card-header bg-info text-white">
+                        <i class="bi bi-qrcode me-2"></i><span>二维码密保体系 (QR Code Backup)</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-3">二维码密保体系是本工具的创新安全机制，通过二维码技术实现私钥分片的便捷备份和恢复。</p>
+                        
+                        <div class="alert alert-info" role="alert">
+                            <i class="bi bi-lightbulb me-2"></i>
+                            <strong>工作原理：</strong>
+                            <ul class="mb-0">
+                                <li>将切片 C（密码分片）封装成 JSON 格式并生成二维码</li>
+                                <li>二维码包含账户别名、版本号和切片内容</li>
+                                <li>支持离线保存，完全在前端生成，不经过服务器</li>
+                                <li>恢复时通过扫码或上传图片识别二维码</li>
+                            </ul>
+                        </div>
+
+                        <h6 class="fw-bold mb-3">技术方案：</h6>
+                        
+                        <div class="row g-4 mb-4">
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-header bg-primary text-white">
+                                        <i class="bi bi-camera me-2"></i>备份阶段
+                                    </div>
+                                    <div class="card-body">
+                                        <ul class="list-unstyled mb-0">
+                                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>将切片 C 封装成 JSON：{"v":1, "a":"别名", "s":"切片内容"}</li>
+                                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>使用 qrcode.js 生成二维码</li>
+                                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>显示账户地址和"密保凭证"水印</li>
+                                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>支持下载为 PNG 图片</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-header bg-success text-white">
+                                        <i class="bi bi-barcode me-2"></i>恢复阶段
+                                    </div>
+                                    <div class="card-body">
+                                        <ul class="list-unstyled mb-0">
+                                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>PC端：使用 jsQR 上传图片识别</li>
+                                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>手机端：使用 html5-qrcode 调用摄像头</li>
+                                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>解析 JSON 获取切片 C</li>
+                                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>向服务器请求切片 A</li>
+                                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>本地重构：A + C = 私钥</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h6 class="fw-bold mb-3">安全增强：</h6>
+                        <div class="alert alert-warning" role="alert">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>重要安全提示：</strong>
+                            <ul class="mb-0">
+                                <li>二维码生成逻辑完全在前端完成，绝不能将切片 C 发送到后端让后端生成二维码图片</li>
+                                <li>建议打印二维码或存入物理加密U盘，不要存入手机相册或云端</li>
+                                <li>一旦二维码泄露，黑客在获取登录权限后可直接盗取资金</li>
+                                <li>恢复时会重新生成新的分片，旧的二维码将失效</li>
+                            </ul>
+                        </div>
+
+                        <h6 class="fw-bold mb-3">使用流程：</h6>
+                        <ol class="mb-0">
+                            <li class="mb-2">添加账户时，系统自动生成密保二维码</li>
+                            <li class="mb-2">点击"下载密保图片"保存为 PNG 文件</li>
+                            <li class="mb-2">半年后设备重装系统，本地分片丢失</li>
+                            <li class="mb-2">登录账号，点击"恢复"按钮，上传二维码图片</li>
+                            <li class="mb-2">系统自动同步切片 A，重新生成分片并设置新密码</li>
+                        </ol>
                     </div>
                 </div>
 
@@ -690,7 +769,7 @@ async getDecryptedSlice(alias, password = null) {
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/js-shamir@0.1.2/build/shamir.min.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/js-shamir@0.1.2/build/shamir.min.js"></script> -->
     <script src="../static/index.js"></script>
     <script>
         // 代码高亮

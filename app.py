@@ -133,15 +133,28 @@ def save_log():
       200:
         description: 日志保存成功
     """
-    data = request.json
-    log = FeedbackLog(
-        type=data['type'],
-        message=data['message'],
-        context=data['context']
-    )
-    db.session.add(log)
-    db.session.commit()
-    return '', 200
+    try:
+        data = request.get_json()
+        if not data:
+            return create_response(error="Invalid JSON", status_code=400)
+        
+        if 'type' not in data:
+            return create_response(error="Missing parameter", details="Field 'type' is required", status_code=400)
+        
+        if 'message' not in data:
+            return create_response(error="Missing parameter", details="Field 'message' is required", status_code=400)
+        
+        log = FeedbackLog(
+            type=data['type'],
+            message=data['message'],
+            context=data.get('context')
+        )
+        db.session.add(log)
+        db.session.commit()
+        return create_response(message="Log saved successfully")
+    except Exception as e:
+        db.session.rollback()
+        return create_response(error="Internal error", details=str(e), status_code=500)
 
 if __name__ == '__main__':
     app.run(debug=True,host='127.0.0.1', port=5002,)
