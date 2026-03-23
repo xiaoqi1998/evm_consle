@@ -148,17 +148,17 @@
                     <div class="card-body">
                         <h5 class="card-title mb-3" data-i18n="toc_title">目录</h5>
                         <ul class="list-unstyled">
-                            <li><a href="#overview" class="toc-link">工具概述</a></li>
-                            <li><a href="#quick-start" class="toc-link">快速开始</a></li>
-                            <li><a href="#account-config" class="toc-link">账户配置</a></li>
-                            <li><a href="#rpc-config" class="toc-link">RPC 节点配置</a></li>
-                            <li><a href="#abi-management" class="toc-link">ABI 管理</a></li>
-                            <li><a href="#contract-interaction" class="toc-link">合约交互</a></li>
-                            <li><a href="#tools" class="toc-link">辅助工具</a></li>
-                            <li><a href="#events" class="toc-link">事件日志查询</a></li>
-                            <li><a href="#metamask" class="toc-link">MetaMask 连接</a></li>
-                            <li><a href="#history" class="toc-link">调用历史记录</a></li>
-                            <li><a href="#troubleshooting" class="toc-link">常见问题</a></li>
+                            <li><a href="#overview" class="toc-link" data-i18n="toc_overview">工具概述</a></li>
+                            <li><a href="#quick-start" class="toc-link" data-i18n="toc_quick_start">快速开始</a></li>
+                            <li><a href="#account-config" class="toc-link" data-i18n="toc_account_config">账户配置</a></li>
+                            <li><a href="#rpc-config" class="toc-link" data-i18n="toc_rpc_config">RPC 节点配置</a></li>
+                            <li><a href="#abi-management" class="toc-link" data-i18n="toc_abi_management">ABI 管理</a></li>
+                            <li><a href="#contract-interaction" class="toc-link" data-i18n="toc_contract_interaction">合约交互</a></li>
+                            <li><a href="#tools" class="toc-link" data-i18n="toc_tools">辅助工具</a></li>
+                            <li><a href="#events" class="toc-link" data-i18n="toc_events">事件日志查询</a></li>
+                            <li><a href="#metamask" class="toc-link" data-i18n="toc_metamask">MetaMask 连接</a></li>
+                            <li><a href="#history" class="toc-link" data-i18n="toc_history">调用历史记录</a></li>
+                            <li><a href="#troubleshooting" class="toc-link" data-i18n="toc_troubleshooting">常见问题</a></li>
                         </ul>
                     </div>
                 </div>
@@ -544,9 +544,13 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/i18n.js"></script>
     <script>
-        // 语言切换功能
-        const translations = {
+        // 语言切换功能 - 使用共享的 i18n.js 文件
+        let currentLang = getLang();
+        
+        // 使用说明页面特定的翻译键
+        const usageTranslations = {
             'zh': {
                 'nav_title': 'EVM API 控制面板',
                 'back_home': '返回首页',
@@ -730,6 +734,19 @@
                 'account_step_3': 'Click the "Save Account" button',
                 'security_tip': 'Security Tip',
                 'security_tip_desc': 'Please ensure you use this tool in a secure environment and do not enter private keys on public networks or insecure devices.',
+                'security_title': '🔒 Security Mechanism Explanation',
+                'security_desc': 'Your private key is protected using <strong>Shamir\'s Secret Sharing</strong> sharding encryption technology:',
+                'security_point_1': 'Private Key Sharding',
+                'security_point_1_desc': 'Private key is split into multiple fragments, stored locally in browser and on server',
+                'security_point_2': 'Local Encryption',
+                'security_point_2_desc': 'Browser-side uses AES-256-GCM to encrypt private key fragments, key derived from your password',
+                'security_point_3': 'Server Storage',
+                'security_point_3_desc': 'Server only stores encrypted private key fragments, cannot restore original private key',
+                'security_point_4': 'No Plaintext Transmission',
+                'security_point_4_desc': 'Private key never transmitted or stored on server in plaintext',
+                'security_point_5_desc': '<strong>Therefore, even if the server is attacked, attackers cannot obtain your private key!</strong>',
+                'security_open_source': '🛡️ Open Source Transparency',
+                'security_open_source_desc': 'This tool is completely open source, all encryption code can be viewed on the <a href="/security" class="alert-link">Security & Open Source page</a>, ensuring no backdoors or hidden logic.',
                 'rpc_config': 'RPC Node Configuration',
                 'rpc_config_desc': 'RPC node configuration is used to connect to different blockchain networks and supports custom RPC addresses.',
                 'add_rpc': 'Add RPC Node:',
@@ -812,6 +829,23 @@
                 'history_feature_4': 'Supports refreshing and clearing history',
                 'troubleshooting': 'Troubleshooting',
                 'faq': 'Q&A:',
+                'toc_overview': 'Overview',
+                'toc_quick_start': 'Quick Start',
+                'toc_account_config': 'Account Configuration',
+                'toc_rpc_config': 'RPC Node Configuration',
+                'toc_abi_management': 'ABI Management',
+                'toc_contract_interaction': 'Contract Interaction',
+                'toc_tools': 'Tools',
+                'toc_events': 'Event Log Query',
+                'toc_metamask': 'MetaMask Connection',
+                'toc_history': 'Call History',
+                'toc_troubleshooting': 'Troubleshooting',
+                'testnet_advice': 'This tool is recommended to be used only on testnets (Testnet), not on mainnet (Mainnet) for handling large assets. Operations on testnets do not affect real assets and are more suitable for development and testing phases.',
+                'free_rpc_note': 'The default configured RPC addresses are mostly free public nodes, network stability may not be guaranteed. For higher stability, it is recommended to use paid RPC services or self-built nodes.',
+                'filter_example': 'Parameter Filter Example:',
+                'events_step_6': '(Optional) Enter parameter filter conditions (JSON format)',
+                'events_step_7': 'Click the "Query Events" button',
+                'events_step_8': 'View event log list',
                 'faq_q1': 'Q: What to do if RPC node connection fails?',
                 'faq_a1': 'A: Please check if the RPC URL is correct, if the network is smooth, or try using another RPC node.',
                 'faq_q2': 'Q: Error when executing contract method?',
@@ -831,37 +865,47 @@
             }
         };
 
-        let currentLang = localStorage.getItem('lang') || 'zh';
-
         function toggleLanguage() {
-            currentLang = currentLang === 'zh' ? 'en' : 'zh';
-            localStorage.setItem('lang', currentLang);
-            updateUI();
+            const newLang = currentLang === 'zh' ? 'en' : 'zh';
+            localStorage.setItem('lang', newLang);
+            
+            // 使用页面跳转确保参数生效
+            const url = new URL(window.location.href);
+            url.searchParams.set('lang', newLang);
+            window.location.href = url.toString();
         }
 
         function updateUI() {
             // 更新所有带有 data-i18n 属性的元素
             document.querySelectorAll('[data-i18n]').forEach(el => {
                 const key = el.getAttribute('data-i18n');
-                if (translations[currentLang][key]) {
+                // 首先检查使用说明特定的翻译
+                if (usageTranslations[currentLang] && usageTranslations[currentLang][key]) {
                     if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
-                        el.placeholder = translations[currentLang][key];
+                        el.placeholder = usageTranslations[currentLang][key];
                     } else {
-                        el.innerText = translations[currentLang][key];
+                        el.innerText = usageTranslations[currentLang][key];
+                    }
+                } 
+                // 然后检查共享的翻译
+                else if (window.translations && window.translations[currentLang] && window.translations[currentLang][key]) {
+                    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                        el.placeholder = window.translations[currentLang][key];
+                    } else {
+                        el.innerText = window.translations[currentLang][key];
                     }
                 }
             });
 
-            // 更新目录链接
-            const sections = ['overview', 'quick-start', 'account-config', 'rpc-config', 'abi-management', 'contract-interaction', 'tools', 'events', 'metamask', 'history', 'troubleshooting'];
-            const sectionNames = ['overview', 'quick_start', 'account_config', 'rpc_config', 'abi_management', 'contract_interaction', 'tools', 'events', 'metamask', 'history', 'troubleshooting'];
-
-            sections.forEach((section, index) => {
-                const link = document.querySelector(`.toc-link[href="#${section}"]`);
-                if (link) {
-                    link.innerText = translations[currentLang][sectionNames[index]];
+            // 更新语言按钮文本
+            const langBtn = document.getElementById('lang-btn');
+            if (langBtn) {
+                if (usageTranslations[currentLang] && usageTranslations[currentLang]['lang_btn']) {
+                    langBtn.innerText = usageTranslations[currentLang]['lang_btn'];
+                } else if (window.translations && window.translations[currentLang] && window.translations[currentLang]['lang_btn']) {
+                    langBtn.innerText = window.translations[currentLang]['lang_btn'];
                 }
-            });
+            }
         }
 
         // 初始化

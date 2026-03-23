@@ -264,7 +264,7 @@ fetch('/api/accounts', {
                             </div>
                             <p class="mb-2" data-i18n="delete_account_desc">删除指定的账户</p>
                             <h6 class="fw-bold mb-1" data-i18n="path_params">路径参数：</h6>
-                            <pre>alias: 账户别名</pre>
+                            <pre data-i18n="path_param_alias">alias: 账户别名</pre>
                             <h6 class="fw-bold mb-1 mt-2" data-i18n="response_format">响应格式：</h6>
                             <pre>{"status": "success", "message": "账户已删除"}</pre>
                         </div>
@@ -309,7 +309,7 @@ fetch('/api/accounts', {
                             </div>
                             <p class="mb-2" data-i18n="delete_rpc_desc">删除指定的 RPC 节点</p>
                             <h6 class="fw-bold mb-1" data-i18n="path_params">路径参数：</h6>
-                            <pre>chain_id: 链 ID</pre>
+                            <pre data-i18n="path_param_chain_id">chain_id: 链 ID</pre>
                             <h6 class="fw-bold mb-1 mt-2" data-i18n="response_format">响应格式：</h6>
                             <pre>{"status": "success", "message": "RPC 已删除"}</pre>
                         </div>
@@ -343,7 +343,7 @@ fetch('/api/accounts', {
                             </div>
                             <p class="mb-2" data-i18n="delete_abi_desc">删除指定的 ABI 文件</p>
                             <h6 class="fw-bold mb-1" data-i18n="query_params">查询参数：</h6>
-                            <pre>abi_name: ABI 名称</pre>
+                            <pre data-i18n="query_param_abi_name">abi_name: ABI 名称</pre>
                             <h6 class="fw-bold mb-1 mt-2" data-i18n="response_format">响应格式：</h6>
                             <pre>{"status": "success", "message": "ABI 'Token' deleted successfully"}</pre>
                         </div>
@@ -367,7 +367,7 @@ fetch('/api/accounts', {
                             </div>
                             <p class="mb-2" data-i18n="get_abi_details_desc">获取 ABI 的详细信息，包括函数、事件、错误等分类</p>
                             <h6 class="fw-bold mb-1" data-i18n="query_params">查询参数：</h6>
-                            <pre>abi_name: ABI 名称</pre>
+                            <pre data-i18n="query_param_abi_name">abi_name: ABI 名称</pre>
                             <h6 class="fw-bold mb-1 mt-2" data-i18n="response_format">响应格式：</h6>
                             <pre>{"status": "success", "message": "Success", "data": {"details": {...}, "full_abi": [...]}}</pre>
                         </div>
@@ -536,7 +536,7 @@ fetch('/api/accounts', {
                             </div>
                             <p class="mb-2" data-i18n="update_account_desc">更新账户信息，主要用于二维码恢复功能</p>
                             <h6 class="fw-bold mb-1" data-i18n="path_params">路径参数：</h6>
-                            <pre>alias: 账户别名</pre>
+                            <pre data-i18n="path_param_alias">alias: 账户别名</pre>
                             <h6 class="fw-bold mb-1" data-i18n="request_body">请求体：</h6>
                             <pre>{
   "address": "0x...",
@@ -560,9 +560,9 @@ fetch('/api/accounts', {
 }</pre>
                             <h6 class="fw-bold mb-1 mt-2" data-i18n="field_descriptions">字段说明：</h6>
                             <ul class="list-unstyled">
-                                <li><code>v</code>: 版本号（当前为 1）</li>
-                                <li><code>a</code>: 账户别名（用于匹配账户）</li>
-                                <li><code>s</code>: 切片 C（密码分片）</li>
+                                <li><code>v</code>: <span data-i18n="qrcode_field_v"></span>版本号（当前为 1）</span></li>
+                                <li><code>a</code>: <span data-i18n="qrcode_field_a">账户别名（用于匹配账户）</span></li>
+                                <li><code>s</code>: <span data-i18n="qrcode_field_s">切片 C（密码分片）</span></li>
                             </ul>
                         </div>
 
@@ -604,9 +604,13 @@ QRScanner.parseQRData(data)</pre>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/i18n.js"></script>
     <script>
-        // 语言切换功能
-        const translations = {
+        // 语言切换功能 - 使用共享的 i18n.js 文件
+        let currentLang = getLang();
+        
+        // 文档页面特定的翻译键
+        const docTranslations = {
             'zh': {
                 'nav_title': 'EVM API 控制面板',
                 'back_home': '返回首页',
@@ -668,7 +672,24 @@ QRScanner.parseQRData(data)</pre>
                 'request_body': '请求体：',
                 'response_format': '响应格式：',
                 'path_params': '路径参数：',
-                'query_params': '查询参数：'
+                'query_params': '查询参数：',
+                'toc_overview': 'API 概述',
+                'toc_auth': '认证方式',
+                'toc_account': '账户管理 API',
+                'toc_rpc': 'RPC 管理 API',
+                'toc_abi': 'ABI 管理 API',
+                'toc_contract': '合约交互 API',
+                'toc_event': '事件查询 API',
+                'toc_transaction': '交易相关 API',
+                'toc_history': '历史记录 API',
+                'toc_config': '配置管理 API',
+                'toc_qrcode': '二维码密保系统 API',
+                'path_param_alias': 'alias: 账户别名',
+                'path_param_chain_id': 'chain_id: 链 ID',
+                'query_param_abi_name': 'abi_name: ABI 名称',
+                'qrcode_field_v': '版本号（当前为 1）',
+                'qrcode_field_a': '账户别名（用于匹配账户）',
+                'qrcode_field_s': '切片 C（密码分片）'
             },
             'en': {
                 'nav_title': 'EVM API Dashboard',
@@ -731,26 +752,59 @@ QRScanner.parseQRData(data)</pre>
                 'request_body': 'Request Body:',
                 'response_format': 'Response Format:',
                 'path_params': 'Path Parameters:',
-                'query_params': 'Query Parameters:'
+                'query_params': 'Query Parameters:',
+                'toc_overview': 'API Overview',
+                'toc_auth': 'Authentication',
+                'toc_account': 'Account Management API',
+                'toc_rpc': 'RPC Management API',
+                'toc_abi': 'ABI Management API',
+                'toc_contract': 'Contract Interaction API',
+                'toc_event': 'Event Query API',
+                'toc_transaction': 'Transaction Related API',
+                'toc_history': 'History API',
+                'toc_config': 'Configuration Management API',
+                'toc_qrcode': 'QR Code Backup System API',
+                'path_param_alias': 'alias: Account alias',
+                'path_param_chain_id': 'chain_id: Chain ID',
+                'query_param_abi_name': 'abi_name: ABI name',
+                'qrcode_field_v': 'Version number (currently 1)',
+                'qrcode_field_a': 'Account alias (for matching accounts)',
+                'qrcode_field_s': 'Slice C (password shard)'
             }
         };
 
-        let currentLang = localStorage.getItem('lang') || 'zh';
-
         function toggleLanguage() {
-            currentLang = currentLang === 'zh' ? 'en' : 'zh';
-            localStorage.setItem('lang', currentLang);
-            updateUI();
+            const newLang = currentLang === 'zh' ? 'en' : 'zh';
+            localStorage.setItem('lang', newLang);
+            
+            // 使用页面跳转确保参数生效
+            const url = new URL(window.location.href);
+            url.searchParams.set('lang', newLang);
+            window.location.href = url.toString();
         }
 
         function updateUI() {
             document.querySelectorAll('[data-i18n]').forEach(el => {
                 const key = el.getAttribute('data-i18n');
-                if (translations[currentLang][key]) {
-                    el.innerText = translations[currentLang][key];
+                // 首先检查文档特定的翻译
+                if (docTranslations[currentLang] && docTranslations[currentLang][key]) {
+                    el.innerText = docTranslations[currentLang][key];
+                } 
+                // 然后检查共享的翻译
+                else if (window.translations && window.translations[currentLang] && window.translations[currentLang][key]) {
+                    el.innerText = window.translations[currentLang][key];
                 }
             });
-            document.getElementById('lang-btn').innerText = translations[currentLang]['lang_btn'];
+            
+            // 更新语言按钮文本
+            const langBtn = document.getElementById('lang-btn');
+            if (langBtn) {
+                if (docTranslations[currentLang] && docTranslations[currentLang]['lang_btn']) {
+                    langBtn.innerText = docTranslations[currentLang]['lang_btn'];
+                } else if (window.translations && window.translations[currentLang] && window.translations[currentLang]['lang_btn']) {
+                    langBtn.innerText = window.translations[currentLang]['lang_btn'];
+                }
+            }
         }
 
         // 初始化页面
