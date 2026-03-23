@@ -164,7 +164,9 @@
         // ==========================================
         let currentUser = null;
         let isLoginMode = true;
-        let currentLang = localStorage.getItem('lang') || 'zh';
+        // 优先获取URL参数中的lang值，如果没有则使用localStorage，最后默认zh
+        const urlParams = new URLSearchParams(window.location.search);
+        let currentLang = urlParams.get('lang') || localStorage.getItem('lang') || 'zh';
         const authModal = new bootstrap.Modal(document.getElementById('authModal'));
 
         const translations = {
@@ -638,7 +640,78 @@
                 'config_api': 'Configuration Management API',
                 'get_configs_desc': 'Get configuration list',
                 'update_config_desc': 'Update configuration',
-                'delete_config_desc': 'Delete configuration'
+                'delete_config_desc': 'Delete configuration',
+                
+                // 新增缺失的翻译键
+                'login': 'Login',
+                'username': 'Username',
+                'password': 'Password',
+                'no_account_register': 'No account? Register now',
+                'enter_transaction_password': 'Enter transaction password',
+                'transaction_password': 'Transaction Password',
+                'hold_to_show_password': 'Hold to show password',
+                'password_local_only': 'Password processed locally only, not transmitted to server',
+                'password_error': 'Password error, please try again',
+                'cancel': 'Cancel',
+                'confirm': 'Confirm',
+                'change_transaction_password': 'Change Transaction Password',
+                'change_password_desc': 'Use old password to decrypt local fragments, then re-encrypt with new password',
+                'old_transaction_password': 'Old Transaction Password',
+                'new_transaction_password': 'New Transaction Password',
+                'confirm_new_password': 'Confirm New Password',
+                'new_password_requirements': 'New password at least 6 characters, processed locally only',
+                'confirm_change': 'Confirm Change',
+                'security_and_open_source': 'Security & Open Source',
+                'development_docs': 'Development Docs',
+                'session_unlocked': 'Unlocked',
+                'session_unlocked_tooltip': 'Session valid, no password required',
+                'lock_session': 'Lock Session',
+                'lock_session_tooltip': 'Lock session, require password for next operation',
+                'disconnect': 'Disconnect',
+                'connect_metamask_nav': 'Connect MetaMask',
+                'change_password_nav': 'Change Password',
+                'logout': 'Logout',
+                'query_contract_events': 'Query Contract Events',
+                'from_block': 'From Block',
+                'to_block': 'To Block',
+                'parameter_filter': 'Parameter Filter (JSON)',
+                'query_events': 'Query Events',
+                'event_results': 'Event results will appear here...',
+                'refresh': 'Refresh',
+                'clear': 'Clear',
+                'recall': 'Recall',
+                'actions': 'Actions',
+                'time': 'Time',
+                'type': 'Type',
+                'method': 'Method/Contract',
+                'params': 'Parameters',
+                'result': 'Result/Error',
+                
+                // 新增登录注册相关翻译
+                'login_register': 'Login / Register',
+                'register': 'Register',
+                'no_account_register': 'No account? Register now',
+                'have_account_login': 'Already have an account? Login',
+                'registration_success': 'Registration successful, please login',
+                
+                // 新增footer相关翻译
+                'evm_api_dashboard': 'EVM API Dashboard',
+                'professional_web3_tool': 'Professional Web3 debugging tool: supports smart contract interaction and data decoding for all EVM-compatible chains.',
+                'abi_dynamic_interaction': 'ABI Dynamic Interaction',
+                'abi_dynamic_desc': 'Parse functions/events/errors, support complex parameter conversion, Read/Write one-click calls.',
+                'full_chain_rpc_config': 'Full Chain RPC Configuration',
+                'rpc_config_desc': 'Custom RPC and private key alias management, support local signing mode.',
+                'data_decoding_history': 'Data Decoding & History',
+                'data_decoding_desc': 'Input Data decoding, event log filtering query, support call history Recall recovery.',
+                'common_ecosystems': 'Common Ecosystems:',
+                'any_evm_chain': '& any EVM chain',
+                
+                // 新增侧边栏提示
+                'login_to_view_config': 'Login to view your configuration',
+                
+                // 新增恢复按钮相关翻译
+                'restore': 'Restore',
+                'restore_account_qr': 'Scan QR code to restore account'
             }
         };
 
@@ -669,12 +742,23 @@
                     }
                 }
             });
-            document.getElementById('lang-btn').innerText = translations[currentLang]['lang_btn'];
+            // 更新语言切换按钮的文字和链接
+            const langBtn = document.querySelector('.navbar .btn-outline-light[href*="lang="]');
+            if (langBtn) {
+                const newLang = currentLang === 'zh' ? 'en' : 'zh';
+                langBtn.href = `?lang=${newLang}`;
+                langBtn.innerText = translations[currentLang]['lang_btn'];
+            }
         }
 
         function toggleLanguage() {
-            currentLang = currentLang === 'zh' ? 'en' : 'zh';
-            localStorage.setItem('lang', currentLang);
+            const newLang = currentLang === 'zh' ? 'en' : 'zh';
+            localStorage.setItem('lang', newLang);
+            
+            // 使用页面跳转确保参数生效
+            const url = new URL(window.location.href);
+            url.searchParams.set('lang', newLang);
+            window.location.href = url.toString();
             updateUI();
         }
 
@@ -693,13 +777,309 @@
             toast.show();
         }
 
+        // ==========================================
+        // 密码输入弹窗功能
+        // ==========================================
+        let passwordModalInstance = null;
+        let currentPasswordCallback = null;
+        let currentPasswordPromptText = '';
+        let changePasswordModalInstance = null;
+
+        function initPasswordModal() {
+            const passwordModalEl = document.getElementById('passwordModal');
+            passwordModalInstance = new bootstrap.Modal(passwordModalEl, {
+                backdrop: 'static',
+                keyboard: false
+            });
+
+            const toggleBtn = document.getElementById('toggle-password-btn');
+            const passwordInput = document.getElementById('password-input');
+            const submitBtn = document.getElementById('password-submit-btn');
+            const errorMsg = document.getElementById('password-error');
+
+            toggleBtn.addEventListener('mousedown', function() {
+                passwordInput.type = 'text';
+                this.innerHTML = '<i class="bi bi-eye-slash"></i>';
+            });
+
+            toggleBtn.addEventListener('mouseup', function() {
+                passwordInput.type = 'password';
+                this.innerHTML = '<i class="bi bi-eye"></i>';
+            });
+
+            toggleBtn.addEventListener('mouseleave', function() {
+                passwordInput.type = 'password';
+                this.innerHTML = '<i class="bi bi-eye"></i>';
+            });
+
+            toggleBtn.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                passwordInput.type = 'text';
+                this.innerHTML = '<i class="bi bi-eye-slash"></i>';
+            });
+
+            toggleBtn.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                passwordInput.type = 'password';
+                this.innerHTML = '<i class="bi bi-eye"></i>';
+            });
+
+            submitBtn.addEventListener('click', async function() {
+                const password = passwordInput.value.trim();
+                if (!password) {
+                    showError('请输入密码');
+                    return;
+                }
+
+                if (currentPasswordCallback) {
+                    try {
+                        await currentPasswordCallback(password);
+                        hidePasswordModal();
+                    } catch (error) {
+                        showError(error.message || '密码错误');
+                    }
+                }
+            });
+
+            passwordInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    submitBtn.click();
+                }
+            });
+        }
+
+        function initChangePasswordModal() {
+            const changePasswordModalEl = document.getElementById('changePasswordModal');
+            changePasswordModalInstance = new bootstrap.Modal(changePasswordModalEl, {
+                backdrop: 'static',
+                keyboard: false
+            });
+
+            const oldPasswordInput = document.getElementById('old-password-input');
+            const newPasswordInput = document.getElementById('new-password-input');
+            const confirmPasswordInput = document.getElementById('confirm-password-input');
+            const submitBtn = document.getElementById('change-password-submit-btn');
+            const errorMsg = document.getElementById('change-password-error');
+
+            document.getElementById('toggle-old-password-btn').addEventListener('mousedown', function() {
+                oldPasswordInput.type = 'text';
+                this.innerHTML = '<i class="bi bi-eye-slash"></i>';
+            });
+            document.getElementById('toggle-old-password-btn').addEventListener('mouseup', function() {
+                oldPasswordInput.type = 'password';
+                this.innerHTML = '<i class="bi bi-eye"></i>';
+            });
+            document.getElementById('toggle-old-password-btn').addEventListener('mouseleave', function() {
+                oldPasswordInput.type = 'password';
+                this.innerHTML = '<i class="bi bi-eye"></i>';
+            });
+            document.getElementById('toggle-old-password-btn').addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                oldPasswordInput.type = 'text';
+                this.innerHTML = '<i class="bi bi-eye-slash"></i>';
+            });
+            document.getElementById('toggle-old-password-btn').addEventListener('touchend', function(e) {
+                e.preventDefault();
+                oldPasswordInput.type = 'password';
+                this.innerHTML = '<i class="bi bi-eye"></i>';
+            });
+
+            document.getElementById('toggle-new-password-btn').addEventListener('mousedown', function() {
+                newPasswordInput.type = 'text';
+                this.innerHTML = '<i class="bi bi-eye-slash"></i>';
+            });
+            document.getElementById('toggle-new-password-btn').addEventListener('mouseup', function() {
+                newPasswordInput.type = 'password';
+                this.innerHTML = '<i class="bi bi-eye"></i>';
+            });
+            document.getElementById('toggle-new-password-btn').addEventListener('mouseleave', function() {
+                newPasswordInput.type = 'password';
+                this.innerHTML = '<i class="bi bi-eye"></i>';
+            });
+            document.getElementById('toggle-new-password-btn').addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                newPasswordInput.type = 'text';
+                this.innerHTML = '<i class="bi bi-eye-slash"></i>';
+            });
+            document.getElementById('toggle-new-password-btn').addEventListener('touchend', function(e) {
+                e.preventDefault();
+                newPasswordInput.type = 'password';
+                this.innerHTML = '<i class="bi bi-eye"></i>';
+            });
+
+            document.getElementById('toggle-confirm-password-btn').addEventListener('mousedown', function() {
+                confirmPasswordInput.type = 'text';
+                this.innerHTML = '<i class="bi bi-eye-slash"></i>';
+            });
+            document.getElementById('toggle-confirm-password-btn').addEventListener('mouseup', function() {
+                confirmPasswordInput.type = 'password';
+                this.innerHTML = '<i class="bi bi-eye"></i>';
+            });
+            document.getElementById('toggle-confirm-password-btn').addEventListener('mouseleave', function() {
+                confirmPasswordInput.type = 'password';
+                this.innerHTML = '<i class="bi bi-eye"></i>';
+            });
+            document.getElementById('toggle-confirm-password-btn').addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                confirmPasswordInput.type = 'text';
+                this.innerHTML = '<i class="bi bi-eye-slash"></i>';
+            });
+            document.getElementById('toggle-confirm-password-btn').addEventListener('touchend', function(e) {
+                e.preventDefault();
+                confirmPasswordInput.type = 'password';
+                this.innerHTML = '<i class="bi bi-eye"></i>';
+            });
+
+            submitBtn.addEventListener('click', async function() {
+                const oldPassword = oldPasswordInput.value.trim();
+                const newPassword = newPasswordInput.value.trim();
+                const confirmPassword = confirmPasswordInput.value.trim();
+
+                if (!oldPassword || !newPassword || !confirmPassword) {
+                    showError('请填写所有字段', 'change-password');
+                    return;
+                }
+
+                if (newPassword.length < 6) {
+                    showError('新密码至少 6 位', 'change-password');
+                    return;
+                }
+
+                if (newPassword !== confirmPassword) {
+                    showError('两次输入的新密码不一致', 'change-password');
+                    return;
+                }
+
+                try {
+                    await changePassword(oldPassword, newPassword);
+                    hideChangePasswordModal();
+                    showToast('密码修改成功', 'success');
+                    oldPasswordInput.value = '';
+                    newPasswordInput.value = '';
+                    confirmPasswordInput.value = '';
+                } catch (error) {
+                    showError(error.message || '密码修改失败', 'change-password');
+                }
+            });
+
+            [oldPasswordInput, newPasswordInput, confirmPasswordInput].forEach(input => {
+                input.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        submitBtn.click();
+                    }
+                });
+            });
+        }
+
+        function showChangePasswordModal() {
+            if (changePasswordModalInstance) {
+                changePasswordModalInstance.show();
+            }
+        }
+
+        function hideChangePasswordModal() {
+            if (changePasswordModalInstance) {
+                changePasswordModalInstance.hide();
+            }
+        }
+
+        function showError(message, type = 'password') {
+            const errorMsg = type === 'change-password' 
+                ? document.getElementById('change-password-error')
+                : document.getElementById('password-error');
+            if (errorMsg) {
+                errorMsg.innerHTML = `<i class="bi bi-exclamation-triangle me-1"></i>${message}`;
+                errorMsg.style.display = 'block';
+            }
+        }
+
+        function showPasswordModal(promptText, callback, clearError = true) {
+            currentPasswordCallback = callback;
+            currentPasswordPromptText = promptText || '请输入交易密码以继续操作';
+            
+            const promptTextEl = document.getElementById('password-prompt-text');
+            if (promptTextEl) {
+                promptTextEl.textContent = currentPasswordPromptText;
+            }
+            
+            const passwordInput = document.getElementById('password-input');
+            const errorMsg = document.getElementById('password-error');
+            
+            if (passwordInput) {
+                passwordInput.value = '';
+                passwordInput.focus();
+            }
+            
+            if (errorMsg && clearError) {
+                errorMsg.style.display = 'none';
+            }
+            
+            if (passwordModalInstance) {
+                passwordModalInstance.show();
+            }
+        }
+
+        function hidePasswordModal() {
+            if (passwordModalInstance) {
+                passwordModalInstance.hide();
+            }
+            currentPasswordCallback = null;
+        }
+
+        function showError(message, type = 'password') {
+            const errorMsg = type === 'change-password' 
+                ? document.getElementById('change-password-error')
+                : document.getElementById('password-error');
+            if (errorMsg) {
+                errorMsg.innerHTML = `<i class="bi bi-exclamation-triangle me-1"></i>${message}`;
+                errorMsg.style.display = 'block';
+            }
+        }
+
+        async function changePassword(oldPassword, newPassword) {
+            const accounts = await accountAPI.getAccounts();
+            
+            if (accounts.length === 0) {
+                throw new Error('没有找到账户');
+            }
+            
+            // accounts 是字符串列表 ["alias1", "alias2"]
+            // 如果只有一个账户,直接使用
+            if (accounts.length === 1) {
+                await SecureStorage.changePassword(accounts[0], oldPassword, newPassword);
+                return;
+            }
+            
+            // 如果有多个账户,让用户选择
+            const selectedAccount = localStorage.getItem('selected_account');
+            if (selectedAccount && accounts.includes(selectedAccount)) {
+                await SecureStorage.changePassword(selectedAccount, oldPassword, newPassword);
+                return;
+            }
+            
+            // 如果没有选择账户或选择的账户不存在,使用第一个账户
+            await SecureStorage.changePassword(accounts[0], oldPassword, newPassword);
+        }
+
+        async function askForPassword(promptText, keepError = false) {
+            return new Promise((resolve, reject) => {
+                showPasswordModal(promptText, (password) => {
+                    if (!password) {
+                        reject(new Error('需要密码才能继续操作'));
+                    } else {
+                        resolve(password);
+                    }
+                }, !keepError);
+            });
+        }
+
         async function checkAuth() {
             const token = localStorage.getItem('evm_api_token');
             
             // 获取导航栏元素
             const userDisplay = document.getElementById('user-display');
             const logoutBtn = document.getElementById('logout-btn');
-            const langBtn = document.getElementById('lang-btn');
+            const languageToggle = document.querySelector('.navbar .btn-outline-light[href*="lang="]');
             
             // 动态创建或获取“登录按钮”
             let loginBtn = document.getElementById('guest-login-btn');
@@ -707,10 +1087,19 @@
                 loginBtn = document.createElement('button');
                 loginBtn.id = 'guest-login-btn';
                 loginBtn.className = 'btn btn-sm btn-primary me-2';
-                loginBtn.innerText = '登录 / 注册';
+                loginBtn.setAttribute('data-i18n', 'login_register');
+                loginBtn.innerText = translations[currentLang]['login_register'];
                 loginBtn.onclick = () => authModal.show();
-                // 插入到语言按钮前面
-                langBtn.parentNode.insertBefore(loginBtn, langBtn);
+                // 插入到语言切换按钮前面
+                if (languageToggle && languageToggle.parentNode) {
+                    languageToggle.parentNode.insertBefore(loginBtn, languageToggle);
+                } else {
+                    // 如果找不到语言切换按钮，插入到导航栏的按钮容器中
+                    const navButtons = document.querySelector('.navbar .d-flex.align-items-center');
+                    if (navButtons) {
+                        navButtons.insertBefore(loginBtn, navButtons.firstChild);
+                    }
+                }
             }
 
             // 情况 A：完全没有 Token
@@ -750,6 +1139,13 @@
             if (display) display.style.display = 'none';
             if (logout) logout.style.display = 'none';
             if (login) login.style.display = 'inline-block';
+            
+            // 隐藏修改密码按钮
+            const changePasswordBtn = document.getElementById('change-password-btn');
+            if (changePasswordBtn) {
+                changePasswordBtn.style.display = 'none';
+            }
+            
             // 隐藏 Token 显示（如果有）
             const tokenW = document.getElementById('user-token-display-wrapper');
             if (tokenW) tokenW.style.display = 'none';
@@ -763,6 +1159,12 @@
             }
             if (logout) logout.style.display = 'inline';
             if (login) login.style.display = 'none';
+            
+            // 显示修改密码按钮
+            const changePasswordBtn = document.getElementById('change-password-btn');
+            if (changePasswordBtn) {
+                changePasswordBtn.style.display = 'inline-block';
+            }
         }
 
         function updateAuthState() {
@@ -818,9 +1220,9 @@
         document.getElementById('toggle-auth-mode').onclick = (e) => {
             e.preventDefault();
             isLoginMode = !isLoginMode;
-            document.getElementById('authModalTitle').innerText = isLoginMode ? '登录' : '注册';
-            document.getElementById('auth-submit-btn').innerText = isLoginMode ? '登录' : '注册';
-            document.getElementById('toggle-auth-mode').innerText = isLoginMode ? '没有账号？立即注册' : '已有账号？返回登录';
+            document.getElementById('authModalTitle').innerText = isLoginMode ? translations[currentLang]['login'] : translations[currentLang]['register'];
+            document.getElementById('auth-submit-btn').innerText = isLoginMode ? translations[currentLang]['login'] : translations[currentLang]['register'];
+            document.getElementById('toggle-auth-mode').innerText = isLoginMode ? translations[currentLang]['no_account_register'] : translations[currentLang]['have_account_login'];
             document.getElementById('auth-error').style.display = 'none';
         };
 
@@ -847,10 +1249,10 @@
                         updateAuthState();
                         checkAuth(); // 重新触发认证检查以更新 UI
                     } else {
-                        alert('注册成功，请登录');
+                        alert(translations[currentLang]['registration_success']);
                         isLoginMode = true;
-                        document.getElementById('authModalTitle').innerText = '登录';
-                        document.getElementById('auth-submit-btn').innerText = '登录';
+                        document.getElementById('authModalTitle').innerText = translations[currentLang]['login'];
+                        document.getElementById('auth-submit-btn').innerText = translations[currentLang]['login'];
                         document.getElementById('toggle-auth-mode').innerText = '没有账号？立即注册';
                     }
                 } else {
@@ -1189,9 +1591,13 @@
                 const sliceA = slices[0];
                 const sliceB = slices[1];
                 
+                // 先关闭配置模态框，然后显示密码模态框
+                const configModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('configModal'));
+                configModal.hide();
+                
                 // 发送到服务器（通过 HTTPS 和用户认证保护）
-                // 弹出密码输入框，用于加密本地分片
-                const password = prompt("请设置交易密码（用于加密本地分片，请妥善保管）：");
+                // 使用自定义密码输入弹窗
+                const password = await askForPassword("请设置交易密码（用于加密本地分片，请妥善保管）");
                 if (!password || password.length < 6) {
                     showToast('交易密码至少 6 位，请重新设置', 'danger');
                     return;
@@ -1215,20 +1621,19 @@
                     try {
                         await SecureStorage.saveEncryptedSlice(alias, sliceB, password);
                         
+                        // 显示账户保存成功的提示
+                        showToast('账户保存成功！请设置交易密码以保护您的资产', 'success');
+                        
                         // 生成二维码密保
                         const sliceC = slices[2];
                         await generateAndShowQRBackup(alias, sliceC, address);
                         
-                        showToast('账户保存成功（分片已加密存储，密保二维码已生成）', 'success');
                     } catch (encryptError) {
                         console.error('加密分片失败:', encryptError);
                         showToast('加密分片失败：' + encryptError.message, 'danger');
                         return;
                     }
                     refreshConfigs();
-                    // 关闭模态框
-                    const configModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('configModal'));
-                    configModal.hide();
                     // 清空表单
                     document.getElementById('cfg-acc-alias').value = '';
                     document.getElementById('cfg-acc-pk').value = '';
@@ -1386,7 +1791,12 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', checkAuth);
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+            initPasswordModal();
+            initChangePasswordModal();
+            updateUI(); // 确保页面加载时更新界面文字
+        });
 
         // ==========================================
         // 2. 核心状态与 Web3 逻辑
@@ -1548,8 +1958,8 @@
                         
                         const restoreBtn = document.createElement('button');
                         restoreBtn.className = 'btn btn-sm btn-outline-primary';
-                        restoreBtn.innerHTML = '<i class="bi bi-qrcode me-1"></i>恢复';
-                        restoreBtn.title = '扫码恢复账户';
+                        restoreBtn.innerHTML = `<i class="bi bi-qrcode me-1"></i>${translations[currentLang]['restore']}`;
+                        restoreBtn.title = translations[currentLang]['restore_account_qr'];
                         restoreBtn.onclick = function() { restoreAccountWithQR(acc); };
                         actionsDiv.appendChild(restoreBtn);
                         
@@ -2277,17 +2687,18 @@
                                 if (sessionError.message === "SESSION_EXPIRED" || sessionError.message === "密码错误或分片损坏") {
                                     let password;
                                     while (true) {
-                                        password = prompt("请输入交易密码以解密本地分片：");
-                                        if (!password) {
-                                            // 用户取消操作，抛出可恢复的错误
-                                            throw new Error('需要密码才能继续操作');
-                                        }
-                                        
                                         try {
+                                            password = await askForPassword("请输入交易密码以解密本地分片", true);
+                                            if (!password) {
+                                                // 用户取消操作，抛出可恢复的错误
+                                                throw new Error('需要密码才能继续操作');
+                                            }
+                                            
                                             sliceB = await SecureStorage.getDecryptedSlice(selectedAccount, password);
                                             break;
                                         } catch (decryptError) {
-                                            alert('密码错误，请重新输入');
+                                            showError('密码错误，请重试');
+                                            continue;
                                         }
                                     }
                                 } else {

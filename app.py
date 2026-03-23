@@ -155,6 +155,18 @@ def save_log():
     except Exception as e:
         db.session.rollback()
         return create_response(error="Internal error", details=str(e), status_code=500)
-
+@app.route('/sitemap.xml')
+def sitemap():
+    """
+    站点地图
+    ---    
+    tags:
+      - 页面
+    responses:
+      200:
+        description: 站点地图XML文件
+    """
+    from datetime import datetime
+    return render_template('sitemap.xml', lastmod=datetime.now().strftime('%Y-%m-%d'))
 if __name__ == '__main__':
     app.run(debug=True,host='127.0.0.1', port=5002,)

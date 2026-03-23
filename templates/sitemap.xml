@@ -19,6 +19,18 @@
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
+    <url>
+        <loc>https://evm.giize.com/security</loc>
+        <lastmod>{{ lastmod }}</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://evm.giize.com/admin</loc>
+        <lastmod>{{ lastmod }}</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.6</priority>
+    </url>
     
     <!-- 认证路由 -->
     <url>
@@ -39,6 +51,70 @@
         <loc>https://evm.giize.com/api/public_key</loc>
         <lastmod>{{ lastmod }}</lastmod>
         <changefreq>monthly</changefreq>
+        <priority>0.6</priority>
+    </url>
+    
+    <!-- 二维码测试页面 -->
+    <url>
+        <loc>https://evm.giize.com/static/test-qr.html</loc>
+        <lastmod>{{ lastmod }}</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.5</priority>
+    </url>
+    
+    <!-- API 端点（需要认证） -->
+    <url>
+        <loc>https://evm.giize.com/api/accounts</loc>
+        <lastmod>{{ lastmod }}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://evm.giize.com/api/rpcs</loc>
+        <lastmod>{{ lastmod }}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://evm.giize.com/api/history</loc>
+        <lastmod>{{ lastmod }}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+    </url>
+    <url>
+        <loc>https://evm.giize.com/contract/read_contract</loc>
+        <lastmod>{{ lastmod }}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://evm.giize.com/contract/write_contract</loc>
+        <lastmod>{{ lastmod }}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://evm.giize.com/contract/get_events</loc>
+        <lastmod>{{ lastmod }}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://evm.giize.com/contract/decode_transaction</loc>
+        <lastmod>{{ lastmod }}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+    </url>
+    <url>
+        <loc>https://evm.giize.com/transaction/send</loc>
+        <lastmod>{{ lastmod }}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://evm.giize.com/transaction/get_receipt</loc>
+        <lastmod>{{ lastmod }}</lastmod>
+        <changefreq>weekly</changefreq>
         <priority>0.6</priority>
     </url>
 </urlset>

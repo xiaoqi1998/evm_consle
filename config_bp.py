@@ -583,3 +583,32 @@ def get_public_key():
     # 生成RSA密钥对（这里使用预定义的公钥，实际环境应从配置加载）
     public_key = "-----BEGIN PUBLIC KEY-----\nMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC8kGa1pSjbSYZVebtTRBLxBz5H\n4i2p/llLCrEeQhta5kaQu/RnvuER4W8oDH3+3iuIYW4VQAzyqFpwuzjkDI+17t5t\n0tyazyZ8JXw+KgXTxldMPEL95+qVhgXvwtihXC1c5oGbRlEDvDF6Sa53rcFVsYJ4\nehde/zUxo6UvS7UrBQIDAQAB\n-----END PUBLIC KEY-----"
     return create_response(data={"public_key": public_key})
+import random
+import time
+@config_bp.route('/api/test', methods=['GET'])
+def test():
+    """
+    测试接口
+    ---    
+    tags:
+      - 测试
+    responses:
+      200:
+        description: 测试成功
+    """
+    id=str(random.randint(9469132370005,19469132370005))
+    timestamp=int(time.time())
+    test = {
+    "code": 0,
+    "data": {
+        "list": [
+            {
+                "id": id,
+                "points": 5,
+                "timestamp": timestamp
+            }
+        ]
+    },
+    "msg": "success"
+}
+    return test

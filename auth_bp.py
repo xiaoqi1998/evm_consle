@@ -230,28 +230,4 @@ def refresh_token():
     
     return create_response(message="Token 刷新成功", data={"token": new_token})
 
-@auth_bp.route('/api/accept_risk', methods=['POST'])
-@login_required_or_token
-def accept_risk():
-    """
-    用户同意风险协议
-    ---    
-    tags:
-      - 认证
-    security:
-      - api_key: []
-    responses:
-      200:
-        description: 同意成功
-      401:
-        description: 未授权
-    """
-    username = g.user_username if hasattr(g, 'user_username') else None
-    if not username:
-        return create_response(message="未授权", status_code=401, error="Unauthorized")
-    
-    user = User.query.filter_by(username=username).first()
-    user.risk_accepted_at = datetime.utcnow()
-    db.session.commit()
-    
-    return create_response(message="风险协议已同意")
+

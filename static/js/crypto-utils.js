@@ -207,8 +207,7 @@ const SecureStorage = {
                 // 用传入的密码和存储的 salt 推导 Key
                 const salt = new Uint8Array(parsed.salt);
                 key = await this.deriveKey(password, salt);
-                // 缓存 Key
-                this._setSessionKey(alias, key);
+                // 注意：先不设置 Session，等解密成功后再设置
             }
 
             const decrypted = await window.crypto.subtle.decrypt(
@@ -217,8 +216,18 @@ const SecureStorage = {
                 new Uint8Array(parsed.data)
             );
             
+            // 解密成功后才设置 Session
+            if (!this._getSessionKey(alias)) {
+                this._setSessionKey(alias, key);
+            }
+            
             return new TextDecoder().decode(decrypted);
         } catch (error) {
+            // 如果是 SESSION_EXPIRED 错误，直接抛出，不清除 Session
+            if (error.message === "SESSION_EXPIRED") {
+                throw error;
+            }
+            
             // 如果解密失败（可能是密码错误、Session 被清除或数据损坏）
             // 更精确的错误类型判断：包括现代浏览器可能返回的各种错误类型
             const isPasswordError = error.name === 'CryptoError' || 
@@ -270,6 +279,45 @@ const SecureStorage = {
             return null;
         }
         return this._session.expiresAt;
+    },
+
+    // 修改密码：使用旧密码解密，再用新密码加密
+    async changePassword(alias, oldPassword, newPassword) {
+        try {
+            // 1. 用旧密码解密
+            const sliceB = await this.getDecryptedSlice(alias, oldPassword);
+            
+            // 2. 用新密码重新加密
+            const iv = window.crypto.getRandomValues(new Uint8Array(12));
+            const salt = window.crypto.getRandomValues(new Uint8Array(16));
+            const key = await this.deriveKey(newPassword, salt);
+            
+            const encrypted = await window.crypto.subtle.encrypt(
+                { name: "AES-GCM", iv },
+                key,
+                new TextEncoder().encode(sliceB)
+            );
+            
+            // 3. 更新存储
+            const result = {
+                salt: Array.from(salt),
+                iv: Array.from(iv),
+                data: Array.from(new Uint8Array(encrypted))
+            };
+            
+            localStorage.setItem(`account_${alias}_sliceB_enc`, JSON.stringify(result));
+            
+            // 4. 更新 Session 缓存
+            this._setSessionKey(alias, key);
+            
+            return true;
+        } catch (error) {
+            console.error('修改密码失败:', error);
+            if (error.message.includes('密码错误') || error.message.includes('SESSION_EXPIRED')) {
+                throw new Error('旧密码错误');
+            }
+            throw new Error('修改密码失败：' + error.message);
+        }
     }
 };
 

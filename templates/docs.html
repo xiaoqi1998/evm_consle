@@ -165,16 +165,17 @@
                     <div class="card-body">
                         <h5 class="card-title mb-3" data-i18n="toc_title">目录</h5>
                         <ul class="list-unstyled">
-                            <li><a href="#overview" class="toc-link">API 概述</a></li>
-                            <li><a href="#authentication" class="toc-link">认证方式</a></li>
-                            <li><a href="#account-api" class="toc-link">账户管理 API</a></li>
-                            <li><a href="#rpc-api" class="toc-link">RPC 管理 API</a></li>
-                            <li><a href="#abi-api" class="toc-link">ABI 管理 API</a></li>
-                            <li><a href="#contract-api" class="toc-link">合约交互 API</a></li>
-                            <li><a href="#event-api" class="toc-link">事件查询 API</a></li>
-                            <li><a href="#transaction-api" class="toc-link">交易相关 API</a></li>
-                            <li><a href="#history-api" class="toc-link">历史记录 API</a></li>
-                            <li><a href="#config-api" class="toc-link">配置管理 API</a></li>
+                            <li><a href="#overview" class="toc-link" data-i18n="toc_overview">API 概述</a></li>
+                            <li><a href="#authentication" class="toc-link" data-i18n="toc_auth">认证方式</a></li>
+                            <li><a href="#account-api" class="toc-link" data-i18n="toc_account">账户管理 API</a></li>
+                            <li><a href="#rpc-api" class="toc-link" data-i18n="toc_rpc">RPC 管理 API</a></li>
+                            <li><a href="#abi-api" class="toc-link" data-i18n="toc_abi">ABI 管理 API</a></li>
+                            <li><a href="#contract-api" class="toc-link" data-i18n="toc_contract">合约交互 API</a></li>
+                            <li><a href="#event-api" class="toc-link" data-i18n="toc_event">事件查询 API</a></li>
+                            <li><a href="#transaction-api" class="toc-link" data-i18n="toc_transaction">交易相关 API</a></li>
+                            <li><a href="#history-api" class="toc-link" data-i18n="toc_history">历史记录 API</a></li>
+                            <li><a href="#config-api" class="toc-link" data-i18n="toc_config">配置管理 API</a></li>
+                            <li><a href="#qrcode-api" class="toc-link" data-i18n="toc_qrcode">二维码密保系统 API</a></li>
                         </ul>
                     </div>
                 </div>
@@ -197,6 +198,9 @@
                             <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i><span data-i18n="api_feature_3">支持多链节点切换</span></li>
                             <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i><span data-i18n="api_feature_4">完整的智能合约交互功能</span></li>
                             <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i><span data-i18n="api_feature_5">支持 MetaMask 集成</span></li>
+                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i><span data-i18n="api_feature_6">二维码密保系统（备份/恢复）</span></li>
+                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i><span data-i18n="api_feature_7">私钥分片加密存储</span></li>
+                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i><span data-i18n="api_feature_8">交易功能支持</span></li>
                         </ul>
                     </div>
                 </div>
@@ -507,6 +511,94 @@ fetch('/api/accounts', {
                         </div>
                     </div>
                 </div>
+
+                <!-- 二维码密保系统 API -->
+                <div id="qrcode-api" class="card mb-4 section">
+                    <div class="card-header bg-primary text-white">
+                        <i class="bi bi-qr-code me-2"></i><span data-i18n="qrcode_api">二维码密保系统 API</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-4" data-i18n="qrcode_overview">二维码密保系统是 EVM API 控制面板的创新安全机制，通过二维码技术实现私钥分片的便捷备份和恢复。该方案完全在前端完成，确保私钥分片永不离开您的浏览器。</p>
+                        
+                        <h6 class="fw-bold mb-3" data-i18n="qrcode_features">核心功能：</h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i><span data-i18n="qrcode_feature_1">私钥分片物理备份</span></li>
+                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i><span data-i18n="qrcode_feature_2">多平台支持（PC端图片识别、手机端摄像头）</span></li>
+                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i><span data-i18n="qrcode_feature_3">自动同步和重新分片</span></li>
+                            <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i><span data-i18n="qrcode_feature_4">版本控制和防伪水印</span></li>
+                        </ul>
+
+                        <!-- 更新账户信息（二维码恢复） -->
+                        <div class="api-card bg-light p-4 mb-4 rounded">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold">PUT /api/accounts/{alias}</h6>
+                                <span class="method-badge method-post" style="background-color: #8b5cf6;">PUT</span>
+                            </div>
+                            <p class="mb-2" data-i18n="update_account_desc">更新账户信息，主要用于二维码恢复功能</p>
+                            <h6 class="fw-bold mb-1" data-i18n="path_params">路径参数：</h6>
+                            <pre>alias: 账户别名</pre>
+                            <h6 class="fw-bold mb-1" data-i18n="request_body">请求体：</h6>
+                            <pre>{
+  "address": "0x...",
+  "pk_slice_server": "服务器存储的私钥分片"
+}</pre>
+                            <h6 class="fw-bold mb-1 mt-2" data-i18n="response_format">响应格式：</h6>
+                            <pre>{"status": "success", "message": "Account updated successfully"}</pre>
+                        </div>
+
+                        <!-- 二维码数据格式 -->
+                        <div class="api-card bg-light p-4 mb-4 rounded">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold">二维码数据格式</h6>
+                                <span class="method-badge" style="background-color: #10b981;">JSON</span>
+                            </div>
+                            <p class="mb-2" data-i18n="qrcode_data_format">二维码包含以下 JSON 数据：</p>
+                            <pre>{
+  "v": 1,
+  "a": "账户别名",
+  "s": "切片 C 内容"
+}</pre>
+                            <h6 class="fw-bold mb-1 mt-2" data-i18n="field_descriptions">字段说明：</h6>
+                            <ul class="list-unstyled">
+                                <li><code>v</code>: 版本号（当前为 1）</li>
+                                <li><code>a</code>: 账户别名（用于匹配账户）</li>
+                                <li><code>s</code>: 切片 C（密码分片）</li>
+                            </ul>
+                        </div>
+
+                        <!-- 前端二维码工具 -->
+                        <div class="api-card bg-light p-4 rounded">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold">前端二维码工具</h6>
+                                <span class="method-badge" style="background-color: #f59e0b;">JavaScript</span>
+                            </div>
+                            <p class="mb-2" data-i18n="qrcode_tools">前端提供了完整的二维码生成和识别工具：</p>
+                            
+                            <h6 class="fw-bold mb-1" data-i18n="generation_tools">生成工具：</h6>
+                            <pre>// 生成密保数据
+QRGenerator.generateBackupData(alias, sliceC)
+
+// 生成二维码图片
+QRGenerator.generateQRBase64(data, size)
+
+// 生成带水印的密保卡片
+QRGenerator.generateBackupCard(alias, sliceC, accountAddress)
+
+// 下载密保图片
+QRGenerator.downloadBackupImage(alias)</pre>
+
+                            <h6 class="fw-bold mb-1 mt-2" data-i18n="scanning_tools">识别工具：</h6>
+                            <pre>// PC端：上传图片识别
+QRScanner.scanImageFromFile(file)
+
+// 手机端：调用摄像头扫码
+QRScanner.scanWithCamera()
+
+// 解析二维码数据
+QRScanner.parseQRData(data)</pre>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -560,6 +652,19 @@ fetch('/api/accounts', {
                 'clear_history_desc': '清空当前用户的调用历史记录',
                 'config_api': '配置管理 API',
                 'get_configs_desc': '获取当前配置的账户别名和链别名/ID 列表',
+                'qrcode_api': '二维码密保系统 API',
+                'qrcode_overview': '二维码密保系统是 EVM API 控制面板的创新安全机制，通过二维码技术实现私钥分片的便捷备份和恢复。该方案完全在前端完成，确保私钥分片永不离开您的浏览器。',
+                'qrcode_features': '核心功能：',
+                'qrcode_feature_1': '私钥分片物理备份',
+                'qrcode_feature_2': '多平台支持（PC端图片识别、手机端摄像头）',
+                'qrcode_feature_3': '自动同步和重新分片',
+                'qrcode_feature_4': '版本控制和防伪水印',
+                'update_account_desc': '更新账户信息，主要用于二维码恢复功能',
+                'qrcode_data_format': '二维码包含以下 JSON 数据：',
+                'field_descriptions': '字段说明：',
+                'qrcode_tools': '前端提供了完整的二维码生成和识别工具：',
+                'generation_tools': '生成工具：',
+                'scanning_tools': '识别工具：',
                 'request_body': '请求体：',
                 'response_format': '响应格式：',
                 'path_params': '路径参数：',
@@ -610,6 +715,19 @@ fetch('/api/accounts', {
                 'clear_history_desc': 'Clear current user\'s call history',
                 'config_api': 'Configuration Management API',
                 'get_configs_desc': 'Get current configured account aliases and chain aliases/IDs',
+                'qrcode_api': 'QR Code Backup System API',
+                'qrcode_overview': 'The QR Code Backup System is an innovative security mechanism in the EVM API Dashboard that enables convenient backup and recovery of private key shards through QR code technology. This solution is completely done on the frontend, ensuring that private key shards never leave your browser.',
+                'qrcode_features': 'Core Features:',
+                'qrcode_feature_1': 'Physical backup of private key shards',
+                'qrcode_feature_2': 'Multi-platform support (PC image recognition, mobile camera)',
+                'qrcode_feature_3': 'Automatic synchronization and re-sharding',
+                'qrcode_feature_4': 'Version control and anti-counterfeiting watermark',
+                'update_account_desc': 'Update account information, mainly used for QR code recovery functionality',
+                'qrcode_data_format': 'QR code contains the following JSON data:',
+                'field_descriptions': 'Field Descriptions:',
+                'qrcode_tools': 'Frontend provides complete QR code generation and recognition tools:',
+                'generation_tools': 'Generation Tools:',
+                'scanning_tools': 'Scanning Tools:',
                 'request_body': 'Request Body:',
                 'response_format': 'Response Format:',
                 'path_params': 'Path Parameters:',

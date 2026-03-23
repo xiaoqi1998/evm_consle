@@ -3,15 +3,81 @@
 // 依赖：qrcode.js (已通过 CDN 引入), jsQR (PC端图片识别), html5-qrcode (手机端扫码)
 
 // ==========================================
+// Base58 编码工具 (用于压缩数据)
+// ==========================================
+const Base58 = {
+    alphabet: '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz',
+    
+    encode(buffer) {
+        if (buffer.length === 0) return '';
+        
+        let num = BigInt('0x' + Array.from(buffer).map(b => 
+            b.toString(16).padStart(2, '0')
+        ).join(''));
+        
+        let encoded = '';
+        while (num > 0) {
+            const remainder = Number(num % BigInt(58));
+            num = num / BigInt(58);
+            encoded = this.alphabet[remainder] + encoded;
+        }
+        
+        for (const byte of buffer) {
+            if (byte === 0) {
+                encoded = '1' + encoded;
+            } else {
+                break;
+            }
+        }
+        
+        return encoded;
+    },
+    
+    decode(str) {
+        if (str.length === 0) return new Uint8Array([]);
+        
+        let num = BigInt('0');
+        for (const char of str) {
+            const index = this.alphabet.indexOf(char);
+            if (index === -1) throw new Error('无效的 Base58 字符');
+            num = num * BigInt(58) + BigInt(index);
+        }
+        
+        const hex = num.toString(16);
+        const bytes = new Uint8Array((hex.length / 2));
+        for (let i = 0; i < hex.length; i += 2) {
+            bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);
+        }
+        
+        let leadingZeros = 0;
+        for (const char of str) {
+            if (char === '1') {
+                leadingZeros++;
+            } else {
+                break;
+            }
+        }
+        
+        const result = new Uint8Array(leadingZeros + bytes.length);
+        result.set(bytes, leadingZeros);
+        return result;
+    }
+};
+
+// ==========================================
 // QR Code Generator - 生成密保二维码
 // ==========================================
 const QRGenerator = {
-    // 生成密保数据
+    // 生成密保数据 (使用 Base58 压缩)
     generateBackupData(alias, sliceC) {
+        const cleanSliceC = sliceC.startsWith('0x') ? sliceC.slice(2) : sliceC;
+        const sliceCBuffer = new Uint8Array(cleanSliceC.match(/.{2}/g).map(byte => parseInt(byte, 16)));
+        const encodedSliceC = Base58.encode(sliceCBuffer);
+        
         return JSON.stringify({
             v: 1,
             a: alias,
-            s: sliceC
+            s: encodedSliceC
         });
     },
 
@@ -274,10 +340,22 @@ const QRScanner = {
                 throw new Error('二维码数据不完整');
             }
 
+            // 解码 Base58 编码的切片
+            let decodedSliceC;
+            try {
+                const decodedBuffer = Base58.decode(data.s);
+                decodedSliceC = '0x' + Array.from(decodedBuffer)
+                    .map(b => b.toString(16).padStart(2, '0'))
+                    .join('');
+            } catch (error) {
+                // 如果不是 Base58 编码,直接返回原始数据(兼容旧版本)
+                decodedSliceC = data.s;
+            }
+
             return {
                 version: data.v,
                 alias: data.a,
-                sliceC: data.s
+                sliceC: decodedSliceC
             };
         } catch (error) {
             throw new Error('二维码解析失败：' + error.message);
@@ -288,5 +366,6 @@ const QRScanner = {
 // ==========================================
 // 暴露到全局作用域
 // ==========================================
+window.Base58 = Base58;
 window.QRGenerator = QRGenerator;
 window.QRScanner = QRScanner;

@@ -9,8 +9,7 @@ COPY requirements.txt .
 
 # 4. 在容器里安装依赖 (同时安装 gunicorn)
 # 加上 -i 参数指向国内镜像源
-RUN pip install --no-cache-dir --upgrade pip -i https://pypi.tuna.tsinghua.edu.cn/simple && \
-    pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple \
+RUN pip install --no-cache-dir -i https://mirrors.aliyun.com/pypi/simple/ \
     -r requirements.txt gunicorn
 
 # 5. 把你本地的代码复制进容器
