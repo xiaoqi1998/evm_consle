@@ -1,20 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="https://www.sitemaps.org/schemas/sitemap/0.9">
-    <!-- 静态页面 -->
+    <!-- 静态页面 - 多语言版本 -->
+    <!-- 首页 - 中文版 -->
     <url>
-        <loc>https://evm.giize.com/</loc>
+        <loc>https://evm.giize.com/?lang=zh</loc>
         <lastmod>{{ lastmod }}</lastmod>
         <changefreq>daily</changefreq>
         <priority>1.0</priority>
     </url>
+    <!-- 首页 - 英文版 -->
     <url>
-        <loc>https://evm.giize.com/usage</loc>
+        <loc>https://evm.giize.com/?lang=en</loc>
+        <lastmod>{{ lastmod }}</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>1.0</priority>
+    </url>
+    
+    <!-- 使用说明 - 中文版 -->
+    <url>
+        <loc>https://evm.giize.com/usage?lang=zh</loc>
         <lastmod>{{ lastmod }}</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
+    <!-- 使用说明 - 英文版 -->
     <url>
-        <loc>https://evm.giize.com/docs</loc>
+        <loc>https://evm.giize.com/usage?lang=en</loc>
+        <lastmod>{{ lastmod }}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    
+    <!-- 开发文档 - 中文版 -->
+    <url>
+        <loc>https://evm.giize.com/docs?lang=zh</loc>
+        <lastmod>{{ lastmod }}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <!-- 开发文档 - 英文版 -->
+    <url>
+        <loc>https://evm.giize.com/docs?lang=en</loc>
         <lastmod>{{ lastmod }}</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>

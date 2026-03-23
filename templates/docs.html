@@ -1,11 +1,29 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="{% if request.args.get('lang') == 'zh' %}zh-CN{% else %}en{% endif %}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% if request.args.get('lang') == 'zh' %}
     <title>开发文档 - EVM API 控制面板</title>
     <meta name="description" content="EVM API 控制面板开发文档，详细介绍所有API接口的使用方法和参数说明。">
     <meta name="keywords" content="EVM API, 开发文档, API接口, 智能合约, 区块链开发">
+    {% else %}
+    <title>Developer Documentation - EVM API Dashboard</title>
+    <meta name="description" content="EVM API Dashboard developer documentation, detailed description of all API interfaces usage methods and parameter specifications.">
+    <meta name="keywords" content="EVM API, developer documentation, API interfaces, smart contract, blockchain development">
+    {% endif %}
+    
+    <!-- === 多语言SEO优化 === -->
+    <link rel="alternate" hreflang="zh-Hans" href="https://evm.giize.com{{ request.path }}?lang=zh" />
+    <link rel="alternate" hreflang="en" href="https://evm.giize.com{{ request.path }}?lang=en" />
+    <link rel="alternate" hreflang="x-default" href="https://evm.giize.com{{ request.path }}?lang=en" />
+    
+    {% if request.args.get('lang') == 'zh' %}
+    <link rel="canonical" href="https://evm.giize.com{{ request.path }}?lang=zh" />
+    {% else %}
+    <link rel="canonical" href="https://evm.giize.com{{ request.path }}?lang=en" />
+    {% endif %}
+    
     <link rel="icon" href="/static/EVM.png" type="image/png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">

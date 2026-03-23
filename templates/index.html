@@ -5,9 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- === 1. 核心 Meta 标签优化 (关键词增强) === -->
+    {% if request.args.get('lang') == 'zh' %}
     <title>EVM API 控制面板 - 专业的以太坊虚拟机 (EVM) 智能合约交互与调试工具</title>
     <meta name="description" content="EVM API 控制面板是一个强大的 Web3 开发者工具，支持以太坊虚拟机 (EVM) 合约交互、ABI 管理、交易解码及事件日志查询。支持多链节点切换，助力高效智能合约开发。">
     <meta name="keywords" content="EVM API, 智能合约交互，ABI 调试工具，以太坊开发，Web3 控制台，区块链工具，Ethereum, BSC, Polygon, Arbitrum">
+    {% else %}
+    <title>EVM API Dashboard - Professional Ethereum Virtual Machine (EVM) Smart Contract Interaction & Debugging Tool</title>
+    <meta name="description" content="EVM API Dashboard is a powerful Web3 developer tool that supports Ethereum Virtual Machine (EVM) contract interaction, ABI management, transaction decoding, and event log query. Supports multi-chain node switching for efficient smart contract development.">
+    <meta name="keywords" content="EVM API, smart contract interaction, ABI debugging tool, Ethereum development, Web3 console, blockchain tools, Ethereum, BSC, Polygon, Arbitrum">
+    {% endif %}
     <meta name="author" content="EVM API Team">
     <meta name="robots" content="index, follow">
     
@@ -33,14 +39,14 @@
         img-src 'self' data:;
     ">
 
-    <!-- === 2. JSON-LD 结构化数据 (搜索引擎最爱的“名片”) === -->
+    <!-- === 2. JSON-LD 结构化数据 (搜索引擎最爱的"名片") === -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "WebApplication",
-      "name": "EVM API 控制面板",
+      "name": "{% if request.args.get('lang') == 'zh' %}EVM API 控制面板{% else %}EVM API Dashboard{% endif %}",
       "alternateName": "EVM Smart Contract Interactor",
-      "description": "专业的 EVM 合约交互平台，支持多链切换、ABI 动态加载。",
+      "description": "{% if request.args.get('lang') == 'zh' %}专业的 EVM 合约交互平台，支持多链切换、ABI 动态加载。{% else %}Professional EVM contract interaction platform supporting multi-chain switching and dynamic ABI loading.{% endif %}",
       "applicationCategory": "DeveloperApplication",
       "operatingSystem": "All",
       "offers": {
@@ -54,13 +60,13 @@
     <!-- Open Graph / 社交分享优化 -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://evm.giize.com/">
-    <meta property="og:title" content="EVM API 控制面板 - 智能合约交互工具">
-    <meta property="og:description" content="强大的 EVM 合约交互平台，支持 ABI 动态加载。">
+    <meta property="og:title" content="{% if request.args.get('lang') == 'zh' %}EVM API 控制面板 - 智能合约交互工具{% else %}EVM API Dashboard - Smart Contract Interaction Tool{% endif %}">
+    <meta property="og:description" content="{% if request.args.get('lang') == 'zh' %}强大的 EVM 合约交互平台，支持 ABI 动态加载。{% else %}Powerful EVM contract interaction platform supporting dynamic ABI loading.{% endif %}">
     <meta property="og:image" content="/static/EVM.png">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:title" content="EVM API Dashboard - Web3 Tool">
+    <meta property="twitter:title" content="{% if request.args.get('lang') == 'zh' %}EVM API 控制面板 - Web3 工具{% else %}EVM API Dashboard - Web3 Tool{% endif %}">
     <meta property="twitter:image" content="/static/EVM.png">
 
     <link rel="icon" href="/static/EVM.png" type="image/png">
